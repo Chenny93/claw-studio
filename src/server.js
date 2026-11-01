@@ -383,6 +383,25 @@ const routes = {
     require('child_process').spawn('rundll32.exe', ['url.dll,FileProtocolHandler', url], { detached: true, stdio: 'ignore' }).unref();
     send(res, 200, { ok: true });
   },
+  // 全文搜索：所有会话的所有用户/Claw 消息（不区分大小写），返回每个会话的命中数和前几条片段
+  'GET /api/search': (u, res) => {
+    const q = (u.searchParams.get('q') || '').trim().toLowerCase();
+    if (q.length < 2) return send(res, 200, []);
+    const idx = loadIndex(), out = [];
+    for (const [key, v] of Object.entries(idx)) {
+      const file = v.sessionFile || path.join(SDIR, v.sessionId + '.jsonl');
+      let txt; try { txt = fs.readFileSync(file, 'utf8'); } catch { continue; }
+      if (!txt.toLowerCase().includes(q)) continue;
+      let hits = 0; const snips = [];
+      for (const m of readTranscript(file)) {
+        const low = m.text.toLowerCase(); let i = low.indexOf(q);
+        while (i >= 0) { hits++; if (snips.length < 3) snips.push({ role: m.role, ts: m.ts, text: m.text.slice(Math.max(0, i - 40), i + q.length + 60) }); i = low.indexOf(q, i + q.length); }
+      }
+      if (hits) out.push({ key, hits, snips });
+    }
+    out.sort((a, b) => b.hits - a.hits);
+    send(res, 200, out);
+  },
   'POST /api/abort': async (u, res, req) => {
     const { key, runId } = JSON.parse(await readBody(req));
     await gw.call('chat.abort', runId ? { sessionKey: key, runId } : { sessionKey: key });
