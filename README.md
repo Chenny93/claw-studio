@@ -74,6 +74,8 @@ Removes shortcuts and stops the service. Your Genspark Claw data and chat histor
 
 - Everything is **local** and bound to `127.0.0.1`. No telemetry, no external calls by Claw Studio itself.
 - Session history is **read-only**; rename/pin data, uploads and window settings live in `%LOCALAPPDATA%\ClawStudio`.
+- **Window browser** follows your Windows default browser (Chrome → Chrome, otherwise Edge). Force one with `%LOCALAPPDATA%\ClawStudio\settings.json`: `{"browser": "chrome"}` or `"edge"`. The window uses its own isolated profile.
+- **External links** clicked inside Claw Studio open in your **default browser**, not inside the app window.
 - Paths are auto-detected. Override with environment variables if needed:
   `CLAW_STATE_DIR` (user data dir), `CLAW_EXE` (path to `Genspark Claw.exe`), `CLAW_STUDIO_PORT` (default 28900).
 

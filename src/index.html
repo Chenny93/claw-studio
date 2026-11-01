@@ -960,6 +960,15 @@ function dequeue(){
   toast('发送排队中的消息'+(queue.length?'（还剩 '+queue.length+' 条）':''));sendMsg();
 }
 
+// ---------- 外部链接：用系统默认浏览器打开（而不是 Studio 窗口所在的浏览器） ----------
+document.addEventListener('click',e=>{
+  const a=e.target.closest('a[href]');if(!a)return;
+  let u;try{u=new URL(a.href,location.href);}catch{return;}
+  if(!/^https?:$/.test(u.protocol)||u.origin===location.origin)return;
+  e.preventDefault();e.stopPropagation();
+  api('/api/openurl',{url:u.href}).then(()=>toast('已在默认浏览器中打开')).catch(err=>{toast('⚠️ '+err.message);window.open(u.href,'_blank');});
+},true);
+
 // ---------- 上下文占用环 ----------
 const fmtN=n=>n>=1e6?(n/1e6).toFixed(n>=1e7?0:2)+'M':n>=1e3?(n/1e3).toFixed(n>=1e5?0:1)+'K':String(n||0);
 const ctxColor=p=>p>=85?'var(--bad)':p>=60?'var(--warn)':'var(--ok)';

@@ -377,6 +377,12 @@ const routes = {
     if (u.searchParams.get('last')) { try { return send(res, 200, JSON.parse(fs.readFileSync(SELFTEST_FILE, 'utf8'))); } catch { return send(res, 200, null); } }
     send(res, 200, await runSelftest(u.searchParams.get('deep') === '1'));
   },
+  'POST /api/openurl': async (u, res, req) => {
+    const { url } = JSON.parse(await readBody(req));
+    if (!/^https?:\/\//i.test(url || '')) return send(res, 400, { error: '只能打开 http/https 链接' });
+    require('child_process').spawn('rundll32.exe', ['url.dll,FileProtocolHandler', url], { detached: true, stdio: 'ignore' }).unref();
+    send(res, 200, { ok: true });
+  },
   'POST /api/abort': async (u, res, req) => {
     const { key, runId } = JSON.parse(await readBody(req));
     await gw.call('chat.abort', runId ? { sessionKey: key, runId } : { sessionKey: key });

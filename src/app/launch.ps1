@@ -82,8 +82,14 @@ if (-not (PortUp $UiPort)) {
 
 # ---------- 3. 窗口 ----------
 Show-Splash '正在打开窗口…'
-$browser = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
-  "$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+# 窗口用哪个浏览器：%LOCALAPPDATA%\ClawStudio\settings.json 里 {"browser":"chrome"|"edge"|"auto"}，默认 auto = 跟随系统默认浏览器
+$edge   = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+$chrome = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe", "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+$pref = 'auto'; try { $pref = (Get-Content (Join-Path $env:LOCALAPPDATA 'ClawStudio\settings.json') -Raw | ConvertFrom-Json).browser } catch {}
+if (-not $pref -or $pref -eq 'auto') { $prog = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice' -ErrorAction SilentlyContinue).ProgId; $pref = if ($prog -match 'Chrome') { 'chrome' } else { 'edge' } }
+$browser = if ($pref -eq 'chrome' -and $chrome) { $chrome } elseif ($edge) { $edge } else { $chrome }
+$ProfileDir = Join-Path (Join-Path $env:LOCALAPPDATA 'ClawStudio') ('browser-' + $(if ($browser -eq $chrome) { 'chrome' } else { 'edge' }))
+L "window browser: $browser (pref=$pref)"
 if ($browser) {
   Start-Process -FilePath $browser -ArgumentList "--app=$Url", "--user-data-dir=`"$ProfileDir`"", '--window-size=1400,900', '--no-first-run', '--no-default-browser-check', '--disable-features=Translate', '--disable-sync'
 } else { Start-Process $Url }
