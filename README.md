@@ -34,7 +34,7 @@ Claw Studio 在本机与 Genspark Claw 共用同一个网关、同一套会话�
 - 📎 per-conversation attachment list
 - **Context usage ring** with `/compact` suggestions · 📊 **daily token usage** (input / cache / output, per model)
 - Light / dark / sepia themes · desktop icon + standalone window
-- 🩺 **self-test** (16 checks) runs automatically when Claw / OpenClaw versions change
+- 🩺 **self-test** (17 checks) runs automatically when Claw / OpenClaw versions change
 
 ## Requirements · 环境
 
@@ -86,6 +86,7 @@ Removes shortcuts and stops the service. Your Genspark Claw data and chat histor
 | "Genspark Claw didn't start within 5 minutes" | Open Genspark Claw manually once, then launch Claw Studio again |
 | "Service failed to start" | See `%LOCALAPPDATA%\ClawStudio\server.err.log` |
 | Something broke after a Claw update | Click 🩺 → *Full check*. Each failing item shows what changed and where to fix it |
+| `gsk` returns 403 / Claw web search, image & video tools fail behind a proxy (VPN / Clash / etc.) | Node-based tools don't use the Windows system proxy. Add to `openclaw.json`: `env: { vars: { HTTPS_PROXY: 'http://127.0.0.1:<port>', HTTP_PROXY: 'http://127.0.0.1:<port>', NODE_USE_ENV_PROXY: '1', NO_PROXY: 'localhost,127.0.0.1' } }` then restart Claw. 🩺 detects this automatically |
 | Launcher log | `%LOCALAPPDATA%\ClawStudio\launch.log` |
 
 ## Security note · 安全

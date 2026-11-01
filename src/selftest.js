@@ -47,6 +47,24 @@ module.exports = (ctx) => async function selftest(deep) {
   }, '依赖 app.log 里的 "Benefits fetched successfully" 行；格式变了就改 server.js 的 getCredit');
   await T('Claw', '更新检测（日志）', () => { const u = getClawUpdate(); return [u.checkedAt ? true : 'warn', u.checkedAt ? '最近检查 ' + u.checkedAt + (u.available ? '，有新版 ' + u.latest : '，已是最新') : '日志里找不到更新检查记录']; }, '依赖 app.log 里的 [Update] 行和 genclaw-updater 目录');
   await T('Claw', '启动器能找到 Claw 程序', () => [fs.existsSync(CLAW_EXE) ? true : 'warn', CLAW_EXE], 'Claw 装到别处了：launch.ps1 会自动搜索，必要时改第一行 $ClawExe');
+
+  // ---- 3b. gsk（Genspark 工具 CLI：搜索/生图/视频/文档等）----
+  await T('Claw', 'gsk 工具 CLI 连通性', async () => {
+    const cp = require('child_process');
+    const run = (env) => new Promise(res => cp.execFile(process.env.SystemRoot ? process.env.SystemRoot + '\\System32\\cmd.exe' : 'cmd.exe', ['/d', '/s', '/c', 'gsk list-tools'], { env: { ...process.env, ...env }, timeout: 45000, windowsHide: true }, (e, out, err) => res(String(out || '') + String(err || ''))));
+    // 系统代理（IE/Windows 设置）
+    let sysProxy = ''; try { const o = cp.execFileSync((process.env.SystemRoot || 'C:\\Windows') + '\\System32\\reg.exe', ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'], { encoding: 'utf8', windowsHide: true });
+      if (/ProxyEnable\s+REG_DWORD\s+0x1/.test(o)) { const m = o.match(/ProxyServer\s+REG_SZ\s+(\S+)/); if (m) sysProxy = m[1]; } } catch {}
+    const out = await run({});
+    if (/"tools"\s*:/.test(out)) return [true, '正常' + (process.env.HTTPS_PROXY ? '（经代理 ' + process.env.HTTPS_PROXY + '）' : '')];
+    if (/not recognized|不是内部或外部命令|ENOENT/i.test(out)) return ['warn', '没有找到 gsk 命令（Claw 版本可能不自带）'];
+    if (/403/.test(out) && sysProxy) {
+      const p = 'http://' + sysProxy.replace(/^https?=|^http:\/\//, '').split(';')[0];
+      const out2 = await run({ HTTPS_PROXY: p, HTTP_PROXY: p, NODE_USE_ENV_PROXY: '1' });
+      if (/"tools"\s*:/.test(out2)) return [false, 'gsk 返回 403：它没有走系统代理 ' + sysProxy + '（加上代理后测试可以连通）'];
+    }
+    return [false, 'gsk 失败：' + out.replace(/\s+/g, ' ').slice(0, 160)];
+  }, '在 Claw 配置 openclaw.json 里加 env.vars：HTTPS_PROXY / HTTP_PROXY = 你的系统代理地址，NODE_USE_ENV_PROXY = "1"，NO_PROXY = "localhost,127.0.0.1"，然后重启 Claw');
   await T('Claw', '日志目录', () => [fs.existsSync(LOGDIR), LOGDIR]);
 
   // ---- 4. 端到端（可选，花少量 token）----
