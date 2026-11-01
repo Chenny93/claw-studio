@@ -1,0 +1,8 @@
+node_modules/
+*.log
+*.bak
+meta.json
+selftest_last.json
+uploads/
+.DS_Store
+Thumbs.db
