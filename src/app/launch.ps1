@@ -71,7 +71,7 @@ if (-not (PortUp $GwPort)) {
 # ---------- 2. Claw Studio 服务 ----------
 if (-not (PortUp $UiPort)) {
   Show-Splash '正在启动 Claw Studio 服务…'
-  $env:ELECTRON_RUN_AS_NODE = '1'
+  $env:ELECTRON_RUN_AS_NODE = '1'; $env:GENCLAW_ELECTRON_BIN = $ClawExe   # Claw 自带的 node/gsk 包装脚本需要它
   Start-Process -FilePath $ClawExe -ArgumentList 'server.js' -WorkingDirectory $Root -WindowStyle Hidden `
     -RedirectStandardError (Join-Path $DataDir 'server.err.log') -RedirectStandardOutput (Join-Path $DataDir 'server.out.log')
   $sw = [Diagnostics.Stopwatch]::StartNew()

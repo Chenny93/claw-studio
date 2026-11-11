@@ -55,8 +55,12 @@ module.exports = (ctx) => async function selftest(deep) {
     // 系统代理（IE/Windows 设置）
     let sysProxy = ''; try { const o = cp.execFileSync((process.env.SystemRoot || 'C:\\Windows') + '\\System32\\reg.exe', ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'], { encoding: 'utf8', windowsHide: true });
       if (/ProxyEnable\s+REG_DWORD\s+0x1/.test(o)) { const m = o.match(/ProxyServer\s+REG_SZ\s+(\S+)/); if (m) sysProxy = m[1]; } } catch {}
-    const out = await run({});
-    if (/"tools"\s*:/.test(out)) return [true, '正常' + (process.env.HTTPS_PROXY ? '（经代理 ' + process.env.HTTPS_PROXY + '）' : '')];
+    // 和 Claw 一样：带上 openclaw.json 里 env.vars 配置的变量（如代理），避免从桌面图标启动时误报
+    let clawEnvVars = {};
+    try { const t = fs.readFileSync(path.join(STATE, 'openclaw.json'), 'utf8'); const m = t.match(/["']?\benv["']?\s*:\s*\{[\s\S]*?["']?\bvars["']?\s*:\s*\{([\s\S]*?)\}/);
+      if (m) for (const kv of m[1].matchAll(/["']?([A-Z_][A-Z0-9_]*)["']?\s*:\s*["']([^"']*)["']/g)) clawEnvVars[kv[1]] = kv[2]; } catch {}
+    const out = await run(clawEnvVars);
+    if (/"tools"\s*:/.test(out)) { const px = clawEnvVars.HTTPS_PROXY || process.env.HTTPS_PROXY; return [true, '正常' + (px ? '（经代理 ' + px + '）' : '')]; }
     if (/not recognized|不是内部或外部命令|ENOENT/i.test(out)) return ['warn', '没有找到 gsk 命令（Claw 版本可能不自带）'];
     if (/403/.test(out) && sysProxy) {
       const p = 'http://' + sysProxy.replace(/^https?=|^http:\/\//, '').split(';')[0];
@@ -75,7 +79,17 @@ module.exports = (ctx) => async function selftest(deep) {
         if (f.event === 'chat' && p.sessionKey === key && (p.state === 'final' || p.state === 'error')) { off(); const t = ((p.message && p.message.content) || []).filter(c => c.type === 'text').map(c => c.text).join(''); p.state === 'final' ? res(t) : rej(new Error(p.errorMessage || 'error')); } });
         setTimeout(() => { off(); rej(new Error('60 秒内没有回复')); }, 60000); });
       await gw.call('chat.send', { sessionKey: key, message: '自检：只回复两个字母 OK，不要调用工具', idempotencyKey: 'st-' + Date.now() });
-      const t = await got; return [/ok/i.test(t), '回复：' + t.slice(0, 40)];
+      let t = await got;
+      // gatewayBusyRetry：网关刚重启/繁忙时的瞬时失败，等 15 秒重试一次
+      if (!/ok/i.test(t) && /Gateway is|restarting|not ready|before reply/i.test(t)) {
+        await new Promise(r => setTimeout(r, 15000));
+        const got2 = new Promise((res, rej) => { const off = gw.on(f => { const p = f.payload || {};
+          if (f.event === 'chat' && p.sessionKey === key && (p.state === 'final' || p.state === 'error')) { off(); const x = ((p.message && p.message.content) || []).filter(c => c.type === 'text').map(c => c.text).join(''); p.state === 'final' ? res(x) : rej(new Error(p.errorMessage || 'error')); } });
+          setTimeout(() => { off(); rej(new Error('60 秒内没有回复')); }, 60000); });
+        await gw.call('chat.send', { sessionKey: key, message: '自检：只回复两个字母 OK，不要调用工具', idempotencyKey: 'st-' + Date.now() });
+        const t2 = await got2; return [/ok/i.test(t2) ? true : false, '首次：' + t.slice(0, 40) + '；15 秒后重试：' + t2.slice(0, 40)];
+      }
+      return [/ok/i.test(t), '回复：' + t.slice(0, 40)];
     }, '发消息链路坏了：检查 chat.send 参数和 chat 事件格式（gw.js / server.js /api/events）');
   }
   const sum = { ok: R.filter(r => r.status === 'ok').length, warn: R.filter(r => r.status === 'warn').length, fail: R.filter(r => r.status === 'fail').length };

@@ -6,6 +6,24 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const gw = require('./gw');
 const C = require('./config');
 const { STATE, SDIR, WORKSPACE, LOGDIR, CLAW_EXE, ASAR, PORT } = C;
+
+// ---------- 与 Claw 保持同一运行环境（代理变量、node 包装器）----------
+function applyClawEnv(exe) {
+  exe = exe || process.execPath;
+  if (!process.env.GENCLAW_ELECTRON_BIN && exe) process.env.GENCLAW_ELECTRON_BIN = exe;   // Claw 的 node.cmd / gsk 包装脚本需要它
+  try {
+    const bin = path.join(process.env.APPDATA || '', 'Genspark Claw', 'bin');
+    const gskBin = path.join(process.env.APPDATA || '', 'Genspark Claw', 'bundled-resources', 'openclaw', 'node_modules', '.bin');
+    const parts = (process.env.PATH || '').split(';');
+    for (const p of [gskBin, bin]) if (fs.existsSync(p) && !parts.some(x => x.toLowerCase() === p.toLowerCase())) parts.unshift(p);
+    process.env.PATH = parts.join(';');
+  } catch {}
+  try {
+    const t = fs.readFileSync(path.join(STATE, 'openclaw.json'), 'utf8');
+    const m = t.match(/["']?\benv["']?\s*:\s*\{[\s\S]*?["']?\bvars["']?\s*:\s*\{([\s\S]*?)\}/);
+    if (m) for (const kv of m[1].matchAll(/["']?([A-Z_][A-Z0-9_]*)["']?\s*:\s*["']([^"']*)["']/g)) if (!process.env[kv[1]]) process.env[kv[1]] = kv[2];
+  } catch {}
+}
 fs.mkdirSync(C.DATA_DIR, { recursive: true });
 const UPLOADS = path.join(C.DATA_DIR, 'uploads');
 const META = path.join(C.DATA_DIR, 'meta.json');
@@ -419,6 +437,7 @@ const routes = {
   }
 };
 
+applyClawEnv(CLAW_EXE);
 http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   // 静态资源：图标 / manifest
