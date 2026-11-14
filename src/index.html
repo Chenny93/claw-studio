@@ -368,6 +368,24 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:12px;font-size:13px;box-shadow:var(--shadow2);opacity:0;pointer-events:none;transition:all .25s;z-index:70}
 #toast.show{opacity:1;transform:translateX(-50%)}
 @media (max-width:860px){#side{width:250px}.sugg{grid-template-columns:1fr}}
+
+/* ---- 我的消息导航条 (umap) ---- */
+#umap{position:absolute;right:14px;width:22px;z-index:30;display:none}
+#umap.on{display:block}
+#umap .rail{position:absolute;inset:0;border-radius:11px;cursor:pointer;transition:background .2s}
+#umap:hover .rail{background:color-mix(in srgb,var(--acc) 8%,transparent)}
+#umap .tk{position:absolute;right:5px;width:12px;height:3px;border-radius:2px;background:var(--acc);opacity:.45;transform:translateY(-50%);pointer-events:none;transition:opacity .2s,width .2s}
+#umap .tk.cur{opacity:1;width:16px}
+#umap .vp{position:absolute;right:2px;width:18px;border-radius:9px;background:color-mix(in srgb,var(--acc) 12%,transparent);pointer-events:none}
+#umpop{position:absolute;right:30px;width:340px;max-height:min(70vh,560px);overflow:auto;background:var(--elev);border:1px solid var(--bd);border-radius:14px;box-shadow:var(--shadow),0 12px 40px rgba(0,0,0,.14);padding:6px;display:none;z-index:31}
+#umap:hover #umpop,#umpop:hover{display:block}
+#umpop .hd{font-size:11px;color:var(--mut);padding:6px 10px 8px;border-bottom:1px solid var(--bd2);margin-bottom:4px;position:sticky;top:-6px;background:var(--elev)}
+#umpop .ui{display:flex;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;font-size:13px;line-height:1.45}
+#umpop .ui:hover{background:var(--sel)}
+#umpop .ui.cur{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+#umpop .ui .n{flex-shrink:0;min-width:22px;color:var(--mut);font-size:11px;padding-top:2px}
+#umpop .ui .tt{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
+#umpop .ui .ts{flex-shrink:0;color:var(--mut);font-size:11px;padding-top:2px}
 </style></head><body>
 <aside id="side">
   <div class="brand"><div class="logo" id="homebtn" title="回到首页">🦞</div><div class="nm">Claw Studio<small>for Genspark Claw</small></div>
@@ -383,6 +401,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 <main id="main">
   <div id="hdr"><div class="t"><h2>Claw Studio</h2><div class="k" id="hdrk">选择左侧会话，或开始新对话</div></div><div id="attlist"><button id="attlb" title="本会话的附件"><span>📎</span><b>0</b><span>附件</span></button><div id="attpop"></div></div></div>
   <div id="msgs"></div>
+  <div id="umap"><div class="rail"></div><div id="umpop"></div></div>
   <div id="comp">
     <div class="box">
       <div id="slash"></div>
@@ -1144,4 +1163,47 @@ load();loadModels();loadSkills();loadInfo();loadWs();
 setInterval(load,30000);setInterval(loadInfo,120000);
 // 调试：#updtest 模拟有新版本
 if(location.hash.includes('updtest'))setTimeout(()=>handleUpd({current:'0.1.780',latest:'0.1.799',available:true,ready:true,releaseDate:new Date().toISOString()}),1500);
+
+// ---- 我的消息导航条：悬停列出本会话我发的全部消息，点击跳转 ----
+(function(){
+  const M=$('#msgs'),U=$('#umap'),P=$('#umpop'),R=U.querySelector('.rail');let items=[],curI=-1,t=0;
+  const txt=el=>{const x=el.querySelector('.tx');let s=(x?x.innerText:'').replace(/\s+/g,' ').trim();
+    if(!s){const n=el.querySelectorAll('.imgs img,.fcard,.file').length;s=n?'[附件 ×'+n+']':'[附件]';}return s;};
+  function build(){
+    items=[...M.querySelectorAll(':scope > .m.user')];
+    const show=items.length>0&&!$('#main').classList.contains('home');
+    U.classList.toggle('on',show);if(!show)return;
+    U.style.top=(M.offsetTop+8)+'px';U.style.height=(M.clientHeight-16)+'px';
+    P.style.top='0px';
+    const H=Math.max(M.scrollHeight,1),h=U.clientHeight;
+    R.querySelectorAll('.tk,.vp').forEach(x=>x.remove());
+    let html='';items.forEach((el,i)=>{html+='<div class="tk" style="top:'+(Math.min(.995,Math.max(.005,(el.offsetTop+el.offsetHeight/2)/H))*100)+'%"></div>';});
+    R.insertAdjacentHTML('beforeend','<div class="vp"></div>'+html);
+    P.innerHTML='<div class="hd">我发出的消息 · '+items.length+' 条 · 点击跳转</div>'+items.map((el,i)=>{
+      const ts=(el.querySelector('.ts')||{}).textContent||'';
+      return '<div class="ui" data-i="'+i+'"><span class="n">'+(i+1)+'</span><span class="tt">'+esc(txt(el).slice(0,300))+'</span><span class="ts">'+esc(ts)+'</span></div>';}).join('');
+    curI=-1;sync();
+  }
+  function sync(){
+    if(!U.classList.contains('on'))return;
+    const H=Math.max(M.scrollHeight,1),vp=R.querySelector('.vp');
+    if(vp){vp.style.top=(M.scrollTop/H*100)+'%';vp.style.height=Math.max(2,M.clientHeight/H*100)+'%';}
+    const mid=M.scrollTop+M.clientHeight*0.4;let c=-1;
+    items.forEach((el,i)=>{if(el.offsetTop<=mid)c=i;});if(c<0&&items.length)c=0;
+    if(c===curI)return;curI=c;
+    R.querySelectorAll('.tk').forEach((x,i)=>x.classList.toggle('cur',i===c));
+    P.querySelectorAll('.ui').forEach((x,i)=>x.classList.toggle('cur',i===c));
+  }
+  const later=()=>{clearTimeout(t);t=setTimeout(build,120);};
+  new MutationObserver(later).observe(M,{childList:true});
+  new MutationObserver(later).observe($('#main'),{attributes:true,attributeFilter:['class']});
+  window.addEventListener('resize',later);
+  M.addEventListener('scroll',()=>requestAnimationFrame(sync),{passive:true});
+  U.addEventListener('mouseenter',()=>{const c=P.querySelector('.ui.cur');if(c)c.scrollIntoView({block:'nearest'});});
+  function go(el){if(!el)return;el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1700);}
+  P.addEventListener('click',e=>{const x=e.target.closest('.ui');if(x)go(items[+x.dataset.i]);});
+  // 直接点导航条：跳到离点击位置最近的那条
+  R.addEventListener('click',e=>{if(!items.length)return;const r=R.getBoundingClientRect(),f=(e.clientY-r.top)/r.height*M.scrollHeight;
+    let b=items[0],d=1e18;items.forEach(el=>{const k=Math.abs(el.offsetTop-f);if(k<d){d=k;b=el;}});go(b);});
+})();
 </script></body></html>
