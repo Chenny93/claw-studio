@@ -329,7 +329,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .lg.INFO .ll{color:#60a5fa}.lg.DEBUG .ll,.lg.TRACE .ll{color:#a1a1aa}.lg.WARN .ll{color:#fbbf24}.lg.WARN{background:rgba(251,191,36,.06)}.lg.ERROR .ll,.lg.FATAL .ll{color:#f87171}.lg.ERROR,.lg.FATAL{background:rgba(248,113,113,.08)}
 .lg mark{background:#854d0e;color:#fff}
 .logst{font-size:11.5px;color:var(--mut);padding:6px 14px;border-top:1px solid var(--bd);display:flex;gap:14px}
-.jr{margin-top:8px;border-top:1px dashed var(--bd);padding-top:6px;display:none}.job.open .jr{display:block}.job{align-items:flex-start}
+.jr{margin-top:8px;border-top:1px dashed var(--bd);padding-top:6px;display:none}.job.open .jr{display:block}.job{align-items:flex-start}.job .ja{align-self:flex-start}
 .jr .ri{display:flex;gap:10px;align-items:flex-start;padding:6px 2px;border-bottom:1px solid var(--bd2);font-size:12px}
 .jr .ri .rt{width:132px;flex-shrink:0;color:var(--mut);font-variant-numeric:tabular-nums}.jr .ri .rs{width:52px;flex-shrink:0}
 .jr .ri .rm{flex:1;min-width:0;color:var(--fg2);white-space:pre-wrap;line-height:1.5;max-height:6em;overflow:hidden;cursor:pointer}.jr .ri .rm.full{max-height:none}
@@ -1325,13 +1325,13 @@ function schedText(s){if(!s)return'';if(s.kind==='cron')return 'Cron '+s.expr;if
 // 健康判断：返回问题描述，正常返回空
 function cronHealth(j){const st=j.state||{};if(!j.enabled)return '';
   if((st.consecutiveErrors||0)>=2)return '连续失败 '+st.consecutiveErrors+' 次';
-  if(st.lastRunStatus==='skipped')return '上次被跳过'+(st.lastError?'（'+st.lastError+'）':'');
+  if(st.lastRunStatus==='skipped')return '上次被跳过'+(st.lastError==='disabled'?'（旧设置：主会话提醒需要心跳，已改为独立运行，下次运行后恢复正常）':st.lastError?'（'+st.lastError+'）':'');
   if(st.lastRunAtMs&&Date.now()-st.lastRunAtMs>40*864e5&&j.schedule&&j.schedule.kind!=='at')return '超过 40 天没运行';
   return '';}
 const RS={ok:'<span class="pill ok">成功</span>',error:'<span class="pill err">失败</span>',skipped:'<span class="pill off">跳过</span>'};
 async function loadRuns(id){const box=document.getElementById('jr-'+id);if(!box)return;box.innerHTML='<div class="hint">加载中…</div>';
   try{const r=await api('/api/cron/runs?id='+encodeURIComponent(id));
-    box.innerHTML=r.length?r.map(x=>'<div class="ri"><span class="rt">'+fmtS(x.runAtMs||x.ts)+'</span><span class="rs">'+(RS[x.status]||esc(x.status))+'</span><span class="rm" title="点击展开/收起">'+esc((x.summary||x.error||'（无输出）').trim())+(x.error&&x.summary?'\n⚠ '+esc(x.error):'')+'</span></div>').join(''):'<div class="hint">还没有运行记录</div>';
+    box.innerHTML=r.length?r.map(x=>'<div class="ri"><span class="rt">'+fmtS(x.runAtMs||x.ts)+'</span><span class="rs">'+(RS[x.status]||esc(x.status))+'</span><span class="rm" title="点击展开/收起">'+esc(x.status==='skipped'?('跳过原因：'+(x.error==='disabled'?'主会话提醒需要心跳，但心跳已关闭（旧设置）':(x.error||'未知'))):(x.summary||x.error||'（无输出）').trim())+(x.error&&x.summary?'\n⚠ '+esc(x.error):'')+'</span></div>').join(''):'<div class="hint">还没有运行记录</div>';
   }catch(e){box.innerHTML='<div class="hint">读取失败：'+esc(e.message)+'</div>';}}
 async function cronBadge(){try{const r=await api('/api/cron');const n=(r.jobs||[]).filter(cronHealth).length;const b=$('#cronbtn');let d=b.querySelector('.bd');if(n&&!d){d=document.createElement('span');d.className='bd';b.appendChild(d);}if(!n&&d)d.remove();b.title=n?'定时任务（'+n+' 个需要关注）':'定时任务';}catch{}}
 setTimeout(cronBadge,3000);setInterval(cronBadge,300000);
