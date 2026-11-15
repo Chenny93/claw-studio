@@ -107,7 +107,7 @@ function listSessions() {
       preview: previewCache[ck], updatedAt: v.updatedAt || 0, createdAt: created ? +created : null,
       model: v.modelOverride || v.model || '', provider: v.providerOverride || v.modelProvider || '', tokens: v.totalTokens || 0, size: st ? st.size : 0,
       ctxUsed: v.totalTokens || 0, ctxMax: v.contextTokens || 0, compactions: v.compactionCount || 0,
-      kind: key.includes(':cron:') ? 'cron' : key.endsWith(':main') ? 'main' : 'chat'
+      kind: key.includes(':subagent:') ? 'subagent' : key.includes(':cron:') ? 'cron' : key.endsWith(':main') ? 'main' : 'chat', parent: v.spawnedBy || ''
     };
   }).sort((a, b) => (b.pinned - a.pinned) || (b.updatedAt - a.updatedAt));
 }
@@ -267,6 +267,87 @@ setTimeout(async () => {
   } catch (e) { console.log('auto selftest skipped:', e.message); }
 }, 20000);
 
+
+// ===================== v1.1.0：子任务 / 记忆 / 日志 =====================
+const STUDIO_DATA = path.join(process.env.LOCALAPPDATA || '', 'ClawStudio');
+const liveRuns = new Map();   // sessionKey -> { runId, startedAt, tool }
+let liveHooked = false;
+function hookLive() {
+  if (liveHooked) return; liveHooked = true;
+  gw.on(f => {
+    const p = f.payload || {}; if (!p.sessionKey) return;
+    if (f.event === 'agent' && p.stream === 'lifecycle' && p.data) {
+      if (p.data.phase === 'start') liveRuns.set(p.sessionKey, { runId: p.runId, startedAt: p.data.startedAt || Date.now(), tool: '' });
+      if (p.data.phase === 'end' || p.data.phase === 'error') liveRuns.delete(p.sessionKey);
+    }
+    if (f.event === 'agent' && p.stream === 'tool' && p.data && liveRuns.has(p.sessionKey)) liveRuns.get(p.sessionKey).tool = p.data.name || '';
+    if (f.event === 'chat' && (p.state === 'final' || p.state === 'aborted' || p.state === 'error')) liveRuns.delete(p.sessionKey);
+  });
+}
+function tailMessages(file) {
+  // 读最后 ~400KB，取第一条用户消息（任务）和最后一条助手回复（结果）
+  let first = '', last = '', lastRole = '', stop = '', err = '';
+  try {
+    const st = fs.statSync(file), fd = fs.openSync(file, 'r');
+    const headLen = Math.min(st.size, 200000), head = Buffer.alloc(headLen); fs.readSync(fd, head, 0, headLen, 0);
+    const tailLen = Math.min(st.size, 400000), tail = Buffer.alloc(tailLen); fs.readSync(fd, tail, 0, tailLen, st.size - tailLen); fs.closeSync(fd);
+    for (const l of head.toString('utf8').split('\n')) { if (!l.includes('"role":"user"')) continue; try { const e = JSON.parse(l); const c = e.message.content; first = (Array.isArray(c) ? c.filter(x => x.type === 'text').map(x => x.text).join(' ') : String(c || '')); break; } catch {} }
+    for (const l of tail.toString('utf8').split('\n')) { if (!l.includes('"type":"message"')) continue; try { const e = JSON.parse(l); const m = e.message; if (!m) continue; lastRole = m.role;
+      if (m.role === 'assistant') { const t = (Array.isArray(m.content) ? m.content.filter(x => x.type === 'text').map(x => x.text).join(' ') : String(m.content || '')); if (t) last = t; stop = m.stopReason || ''; err = m.errorMessage || ''; } } catch {} }
+  } catch {}
+  return { first, last, lastRole, stop, err };
+}
+function listSubagents(parent) {
+  hookLive(); gw.connect().catch(() => {});
+  const idx = loadIndex(), out = [];
+  for (const [key, v] of Object.entries(idx)) {
+    if (!key.includes(':subagent:')) continue;
+    if (parent && v.spawnedBy !== parent) continue;
+    const file = v.sessionFile || path.join(SDIR, v.sessionId + '.jsonl');
+    const t = tailMessages(file), live = liveRuns.get(key);
+    let status = live ? 'running' : v.abortedLastRun ? 'aborted' : t.err || t.stop === 'error' ? 'error' : t.lastRole === 'assistant' && t.last ? 'done' : (Date.now() - (v.updatedAt || 0) < 120000 ? 'running' : 'unknown');
+    out.push({ key, label: v.label || '', parent: v.spawnedBy || '', role: v.subagentRole || '', depth: v.spawnDepth || 1,
+      updatedAt: v.updatedAt || 0, tokens: v.totalTokens || 0, model: v.model || '', status, tool: live ? live.tool : '', startedAt: live ? live.startedAt : null,
+      task: (t.first.split('[Subagent Task]:').pop() || '').replace(/\s+/g, ' ').trim().slice(0, 300), result: t.last.replace(/\s+/g, ' ').slice(0, 400), error: t.err });
+  }
+  return out.sort((a, b) => (a.status === 'running' ? 0 : 1) - (b.status === 'running' ? 0 : 1) || b.updatedAt - a.updatedAt);
+}
+
+// ---- 记忆文件：只允许 workspace 下的 .md ----
+function memFiles() {
+  const out = [], W = WORKSPACE;
+  const add = (group, rel) => { const p = path.join(W, rel); try { const st = fs.statSync(p); if (st.isFile()) out.push({ group, rel: rel.split(path.sep).join('/'), size: st.size, updatedAt: st.mtimeMs }); } catch {} };
+  for (const f of ['MEMORY.md', 'USER.md', 'SOUL.md', 'IDENTITY.md', 'TOOLS.md', 'HEARTBEAT.md', 'AGENTS.md']) add(f === 'MEMORY.md' || f === 'USER.md' ? '长期记忆' : '核心设定', f);
+  try { for (const f of fs.readdirSync(path.join(W, 'memory')).filter(f => f.endsWith('.md')).sort().reverse()) add('每日笔记', path.join('memory', f)); } catch {}
+  try { (function walk(d, rel) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const r = path.join(rel, e.name); if (e.isDirectory()) { if (e.name !== 'handoffs') walk(path.join(d, e.name), r); } else if (e.name.endsWith('.md')) add('任务档案', r); } })(path.join(W, 'tasks'), 'tasks'); } catch {}
+  return out;
+}
+function memPath(rel) {
+  const p = path.resolve(WORKSPACE, String(rel || ''));
+  if (!p.toLowerCase().startsWith(path.resolve(WORKSPACE).toLowerCase() + path.sep) || !p.toLowerCase().endsWith('.md')) throw new Error('只允许编辑工作区内的 .md 文件');
+  return p;
+}
+
+// ---- 日志 ----
+const LOG_SECRETS = (() => { const s = []; try { const t = fs.readFileSync(path.join(STATE, 'openclaw.json'), 'utf8');
+  for (const m of t.matchAll(/(?:apiKey|token)["']?\s*:\s*["']([^"']{16,})["']/g)) s.push(m[1]); } catch {} return s; })();
+const redactLog = s => { for (const k of LOG_SECRETS) s = s.split(k).join('[REDACTED]');
+  return s.replace(/gsk-[A-Za-z0-9_\-]{30,}|github_pat_[A-Za-z0-9_]{30,}|ghp_[A-Za-z0-9]{30,}|(?<![A-Za-z])sk-(proj-)?[A-Za-z0-9_\-]{32,}/g, '[REDACTED]'); };
+function parseGwLine(l) {
+  try { const j = JSON.parse(l); const m = j._meta || {};
+    const parts = Object.keys(j).filter(k => /^\d+$/.test(k)).sort((a, b) => a - b).map(k => typeof j[k] === 'string' ? j[k] : JSON.stringify(j[k]));
+    let src = m.name || ''; let msg = parts.join(' ');
+    try { const p0 = JSON.parse(parts[0]); if (p0 && p0.subsystem) { src = p0.subsystem; msg = parts.slice(1).join(' '); } else if (p0 && p0.module) { src = p0.module; msg = parts.slice(1).join(' '); } } catch {}
+    let lvl = (m.logLevelName || 'INFO').toUpperCase();
+    const pm = msg.match(/^\s*\[(warn|warning|error|err|fatal|debug)\]\s*/i);   // 消息内自带的级别前缀
+    if (pm) { const x = pm[1].toLowerCase(); lvl = x.startsWith('warn') ? 'WARN' : x.startsWith('err') ? 'ERROR' : x.toUpperCase(); }
+    msg = msg.replace(/^\[\d{4}-\d\d-\d\dT[\d:.]+Z\]\s*/, '');   // 去掉重复的 UTC 时间戳
+    return { t: j.time || m.date || '', lvl, src, msg: redactLog(msg) };
+  } catch { return { t: '', lvl: 'INFO', src: '', msg: redactLog(l) }; }
+}
+function tailFile(p, n) { try { const st = fs.statSync(p), len = Math.min(st.size, 300000), b = Buffer.alloc(len), fd = fs.openSync(p, 'r'); fs.readSync(fd, b, 0, len, st.size - len); fs.closeSync(fd);
+  return b.toString('utf8').split(/\r?\n/).filter(Boolean).slice(-n).map(l => { const m = l.match(/^\[?(\d{4}-\d\d-\d\d[ T]\d\d:\d\d:\d\d)\]?\s*(.*)$/); const msg = m ? m[2] : l; return { t: m ? m[1] : '', lvl: /error|fail|exception/i.test(msg) ? 'ERROR' : /warn/i.test(msg) ? 'WARN' : 'INFO', src: '', msg: redactLog(msg) }; }); } catch { return []; } }
+
 // ---------- HTTP ----------
 function send(res, code, body, type) {
   res.writeHead(code, { 'Content-Type': type || 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -419,6 +500,43 @@ const routes = {
     }
     out.sort((a, b) => b.hits - a.hits);
     send(res, 200, out);
+  },
+  'GET /api/subagents': (u, res) => send(res, 200, listSubagents(u.searchParams.get('parent') || '')),
+  'POST /api/subagents/abort': async (u, res, req) => {
+    const { key } = JSON.parse(await readBody(req));
+    if (!String(key || '').includes(':subagent:')) return send(res, 400, { error: '只能停止子任务' });
+    await gw.call('chat.abort', { sessionKey: key }); liveRuns.delete(key); send(res, 200, { ok: true });
+  },
+  'GET /api/memory/list': (u, res) => send(res, 200, { workspace: WORKSPACE, files: memFiles() }),
+  'GET /api/memory/file': (u, res) => { const p = memPath(u.searchParams.get('rel')); const st = fs.statSync(p); send(res, 200, { rel: u.searchParams.get('rel'), content: fs.readFileSync(p, 'utf8'), updatedAt: st.mtimeMs, path: p }); },
+  'POST /api/memory/file': async (u, res, req) => {
+    const { rel, content, baseUpdatedAt } = JSON.parse(await readBody(req));
+    const p = memPath(rel); const st = fs.statSync(p);
+    if (baseUpdatedAt && Math.abs(st.mtimeMs - baseUpdatedAt) > 1) return send(res, 409, { error: '这个文件在你打开之后被修改过（可能是 Claw 刚写入），请重新加载后再改' });
+    const bdir = path.join(STUDIO_DATA, 'memory-backups'); fs.mkdirSync(bdir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    fs.copyFileSync(p, path.join(bdir, String(rel).replace(/[\\/]/g, '__') + '.' + stamp + '.bak'));
+    fs.writeFileSync(p, content, 'utf8');
+    send(res, 200, { ok: true, updatedAt: fs.statSync(p).mtimeMs });
+  },
+  'GET /api/memory/search': (u, res) => {
+    const q = (u.searchParams.get('q') || '').trim().toLowerCase(); if (q.length < 2) return send(res, 200, []);
+    const out = [];
+    for (const f of memFiles()) { let lines; try { lines = fs.readFileSync(path.join(WORKSPACE, f.rel), 'utf8').split(/\r?\n/); } catch { continue; }
+      const hits = []; lines.forEach((l, i) => { if (l.toLowerCase().includes(q) && hits.length < 5) hits.push({ line: i + 1, text: l.trim().slice(0, 200) }); });
+      if (hits.length) out.push({ rel: f.rel, group: f.group, hits }); }
+    send(res, 200, out);
+  },
+  'GET /api/logs': async (u, res) => {
+    const src = u.searchParams.get('src') || 'gateway';
+    if (src === 'gateway') {
+      const p = { limit: 400, maxBytes: 400000 }; const c = u.searchParams.get('cursor'); if (c) p.cursor = +c;
+      const r = await gw.call('logs.tail', p, 20000);
+      return send(res, 200, { src, file: r.file, cursor: r.cursor, lines: (r.lines || []).map(parseGwLine) });
+    }
+    const f = { launch: 'launch.log', server: 'server.err.log', serverout: 'server.out.log' }[src];
+    if (!f) return send(res, 400, { error: 'unknown source' });
+    send(res, 200, { src, file: path.join(STUDIO_DATA, f), cursor: null, lines: tailFile(path.join(STUDIO_DATA, f), 500) });
   },
   'POST /api/abort': async (u, res, req) => {
     const { key, runId } = JSON.parse(await readBody(req));

@@ -28,6 +28,11 @@ Claw Studio 在本机与 Genspark Claw 共用同一个网关、同一套会话�
 - `/` skill menu · per-conversation **model picker** · scheduled tasks (cron) · **computer-use** mode · local **workspace** folder
 - Credit balance & version · **Claw update notification with one-click upgrade**
 
+**Power tools · 进阶工具（v1.1）**
+- 🤖 **Sub-agent panel** — live status, task, result, tokens and model of every sub-agent Claw spawns; stop a running one; jump to its full transcript · 子任务面板
+- 🧠 **Memory manager** — browse, search and edit `MEMORY.md`, daily notes, task files and core settings; every save is backed up and conflicts with Claw's own writes are detected · 记忆管理器
+- 📜 **Live logs** — tail the OpenClaw gateway log and Claw Studio's own logs with level filter, keyword search and follow mode; secrets are redacted · 实时日志
+
 **Enhancements · 增强**
 - **Up to 20 attachments** at once (paste / drag & drop)
 - Images in history render as real pictures; **PDF / .ipynb / txt / md / code** preview in-app; open / reveal / download any file

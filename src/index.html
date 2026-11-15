@@ -284,6 +284,51 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .str .sd{flex:1;min-width:0;font-size:12.5px;color:var(--fg2);word-break:break-all}.str .sf{display:block;color:var(--warn);font-size:12px;margin-top:2px}
 #stban{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:46;display:none;background:var(--panel);border:1px solid var(--warn);border-radius:12px;padding:10px 14px;box-shadow:var(--shadow2);font-size:13px;gap:10px;align-items:center}
 .ftsn{font-size:11.5px;color:var(--fg2);margin:2px 0 1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.45}
+.toolrow{display:flex;gap:4px;padding:0 14px 8px}
+.toolrow button{flex:1;height:30px;border:1px solid var(--bd);background:var(--panel);border-radius:9px;font-size:12px;color:var(--fg2);display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+.toolrow button:hover{border-color:var(--acc);color:var(--fg)}
+.toolrow .n{font-size:10.5px;background:var(--acc);color:#fff;border-radius:8px;padding:0 5px;font-weight:700}
+.dot.subagent{background:var(--acc2);opacity:1}
+#subb{height:32px;padding:0 10px;border:1px solid var(--bd);border-radius:10px;background:var(--panel);font-size:12.5px;color:var(--fg2);display:none;align-items:center;gap:6px;margin-left:auto}
+#subb.show{display:inline-flex}#subb:hover{border-color:var(--acc)}
+#subb + #attlist{margin-left:8px}
+.spin{display:inline-block;width:10px;height:10px;border:2px solid var(--acc);border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.sa{border:1px solid var(--bd);border-radius:12px;background:var(--elev);padding:12px 14px;margin-bottom:8px}
+.sa.running{border-color:color-mix(in srgb,var(--acc) 50%,var(--bd));box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 12%,transparent)}
+.sa .sh{display:flex;align-items:center;gap:8px}.sa .sh>.spin,.sa .sh>.ico{width:18px;flex-shrink:0;text-align:center}.sa .sm a{display:inline-block;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}.sa .sh b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sa .sm{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;gap:12px;flex-wrap:wrap}
+.sa .st{font-size:12.5px;color:var(--fg2);margin-top:8px;line-height:1.55}.sa .st span{color:var(--mut);font-weight:600;margin-right:6px}
+.sa .sb{display:flex;gap:6px;margin-top:10px}
+.pill.run{background:color-mix(in srgb,var(--acc) 18%,transparent);color:var(--acc)}
+/* 记忆管理器 */
+#memm .card{width:min(1180px,96vw);height:90vh;display:flex;flex-direction:column}
+.memw{flex:1;min-height:0;display:flex}
+.meml{width:300px;flex-shrink:0;border-right:1px solid var(--bd);display:flex;flex-direction:column;min-height:0}
+.meml input{margin:12px;height:34px;padding:0 10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);outline:none}
+#memlist{flex:1;overflow:auto;padding:0 8px 24px}
+.mf{padding:7px 10px;border-radius:9px;cursor:pointer;font-size:13px;display:flex;gap:8px;align-items:baseline}
+.mf:hover{background:var(--hov)}.mf.on{background:var(--sel);color:var(--acc)}
+.mf b{flex:1;min-width:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mf span{font-size:11px;color:var(--mut)}
+.mh2{font-size:12px;color:var(--fg2);padding:0 10px 4px 26px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mh2:hover{color:var(--acc)}
+.memr{flex:1;min-width:0;display:flex;flex-direction:column}
+.memtb{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--bd)}
+.memtb .p{flex:1;min-width:0;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#memed{flex:1;min-height:0;width:100%;resize:none;border:none;outline:none;padding:14px 18px;background:var(--bg);font:13px/1.65 "JetBrains Mono",Consolas,"Microsoft YaHei",monospace;color:var(--fg)}
+#memprev{flex:1;min-height:0;overflow:auto;padding:16px 22px;display:none}
+.memwarn{margin:10px 14px 0;padding:8px 12px;border-radius:9px;background:color-mix(in srgb,var(--warn) 14%,transparent);font-size:12px;color:var(--fg2);display:none}
+.dirty{color:var(--warn);font-size:12px;font-weight:600}
+/* 日志 */
+#logm .card{width:min(1280px,97vw);height:90vh;display:flex;flex-direction:column}
+.logtb{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.logtb select,.logtb input{height:32px;padding:0 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);outline:none;font-size:12.5px}
+#logbox{flex:1;min-height:0;overflow:auto;background:#0d0d10;color:#d4d4d8;font:12px/1.55 "JetBrains Mono",Consolas,monospace;padding:8px 0}
+.lg{display:flex;gap:10px;padding:1px 14px;white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere}
+.lg:hover{background:#1a1a20}
+.lg .lt{color:#a1a1aa;flex-shrink:0}.lg .ll{width:44px;flex-shrink:0;font-weight:700}.lg .ls{color:#a78bfa;flex-shrink:0;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg.INFO .ll{color:#60a5fa}.lg.DEBUG .ll,.lg.TRACE .ll{color:#a1a1aa}.lg.WARN .ll{color:#fbbf24}.lg.WARN{background:rgba(251,191,36,.06)}.lg.ERROR .ll,.lg.FATAL .ll{color:#f87171}.lg.ERROR,.lg.FATAL{background:rgba(248,113,113,.08)}
+.lg mark{background:#854d0e;color:#fff}
+.logst{font-size:11.5px;color:var(--mut);padding:6px 14px;border-top:1px solid var(--bd);display:flex;gap:14px}
 /* 空状态 */
 .hero{max-width:820px;margin:0 auto;text-align:center;min-height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:3vh}
 .hero .logo{width:56px;height:56px;border-radius:16px;font-size:28px;margin:0 auto 18px}
@@ -400,15 +445,16 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   <div class="brand"><div class="logo" id="homebtn" title="回到首页">🦞</div><div class="nm">Claw Studio<small>for Genspark Claw</small></div>
     <button class="ib" id="stbtn" title="自检：检查 Studio 各功能是否正常（升级 Claw 后建议跑一次）">🩺</button><button class="ib" id="usebtn" title="每日 Token 用量">📊</button><button class="ib" id="cronbtn" title="定时任务">⏰</button>
     <button class="ib" id="themebtn" title="切换主题">🌓</button></div>
+  <div class="toolrow"><button id="subtool" title="查看所有子任务的进度与结果">🤖 子任务 <span class="n" id="subtoolN" style="display:none"></span></button><button id="memtool" title="浏览、搜索、编辑 Claw 的记忆文件">🧠 记忆</button><button id="logtool" title="实时查看 Claw 运行日志">📜 日志</button></div>
   <button id="newbtn">✏️ 新对话 <span class="k">Ctrl K</span></button>
   <div class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="搜索会话（标题 + 全部聊天内容）…"></div>
-  <div id="filters"><button data-f="all" class="on">全部</button><button data-f="chat">对话</button><button data-f="pinned">置顶</button><button data-f="unnamed">未命名</button><button data-f="cron">定时</button></div>
+  <div id="filters"><button data-f="all" class="on">全部</button><button data-f="chat">对话</button><button data-f="pinned">置顶</button><button data-f="unnamed">未命名</button><button data-f="cron">定时</button><button data-f="sub">子任务</button></div>
   <div id="list"></div>
   <div id="count"></div>
   <div id="info"><span class="hint">加载账户信息…</span></div>
 </aside>
 <main id="main">
-  <div id="hdr"><div class="t"><h2>Claw Studio</h2><div class="k" id="hdrk">选择左侧会话，或开始新对话</div></div><div id="attlist"><button id="attlb" title="本会话的附件"><span>📎</span><b>0</b><span>附件</span></button><div id="attpop"></div></div></div>
+  <div id="hdr"><div class="t"><h2>Claw Studio</h2><div class="k" id="hdrk">选择左侧会话，或开始新对话</div></div><button id="subb" title="本会话派出的子任务"></button><div id="attlist"><button id="attlb" title="本会话的附件"><span>📎</span><b>0</b><span>附件</span></button><div id="attpop"></div></div></div>
   <div id="msgs"></div>
   <div id="umap"><div class="rail"></div><div id="umpop"></div></div>
   <div id="comp">
@@ -453,6 +499,34 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 <div class="modal" id="stm"><div class="card">
   <div class="mh"><h3>🩺 Claw Studio 自检</h3><button class="tb" id="strun">快速检查</button><button class="tb" id="strund" title="额外向测试会话发一条消息（花极少 token）">完整检查（含发消息）</button><button class="ib" id="stclose">✕</button></div>
   <div class="mb" id="stbody"></div>
+</div></div>
+<div class="modal" id="subm"><div class="card">
+  <div class="mh"><h3>🤖 子任务</h3><div id="subfilter" style="display:flex;gap:4px;margin-right:10px"></div><button class="ib" id="subclose">✕</button></div>
+  <div class="mb" id="subbody"></div>
+</div></div>
+<div class="modal" id="memm"><div class="card">
+  <div class="mh"><h3>🧠 记忆管理器</h3><span class="hint" id="memws" style="margin-right:12px"></span><button class="ib" id="memclose">✕</button></div>
+  <div class="memw">
+    <div class="meml"><input id="memq" placeholder="搜索所有记忆内容…"><div id="memlist"></div></div>
+    <div class="memr">
+      <div class="memtb"><span class="p" id="mempath">选择左侧一个文件</span><span class="dirty" id="memdirty"></span>
+        <button class="tb" id="memprevb">👁 预览</button><button class="tb" id="memreload">↻ 重新加载</button><button class="pbtn" id="memsave" style="height:32px">保存</button></div>
+      <div class="memwarn" id="memwarn"></div>
+      <textarea id="memed" spellcheck="false" disabled></textarea>
+      <div id="memprev" class="tx"></div>
+    </div>
+  </div>
+</div></div>
+<div class="modal" id="logm"><div class="card">
+  <div class="mh"><h3>📜 实时日志</h3><button class="ib" id="logclose">✕</button></div>
+  <div class="logtb">
+    <select id="logsrc"><option value="gateway">Claw 网关（OpenClaw）</option><option value="launch">Claw Studio 启动器</option><option value="server">Claw Studio 服务（错误输出）</option><option value="serverout">Claw Studio 服务（标准输出）</option></select>
+    <select id="loglvl"><option value="">全部级别</option><option value="WARN">警告及以上</option><option value="ERROR">仅错误</option></select>
+    <input id="logq" placeholder="过滤关键字…" style="width:220px">
+    <button class="tb on" id="logfollow">⏵ 实时跟随</button><button class="tb" id="logcopy">⧉ 复制</button><button class="tb" id="logclear">清空显示</button>
+  </div>
+  <div id="logbox"></div>
+  <div class="logst"><span id="logfile"></span><span id="logcount"></span><span>日志中的 API key、GitHub PAT 等密钥已自动遮盖（连接 ID、运行 ID 不是密钥，保留原样）</span></div>
 </div></div>
 <div class="modal" id="usem"><div class="card">
   <div class="mh"><h3>📊 每日 Token 用量</h3><div id="urange" style="display:flex;gap:4px;margin-right:10px"></div><button class="ib" id="useclose">✕</button></div>
@@ -539,6 +613,8 @@ function render(){
   const q=$('#q').value.trim().toLowerCase();
   const rows=all.filter(s=>{
     if(filter==='chat'&&s.kind!=='chat')return false;
+    if(filter!=='sub'&&s.kind==='subagent')return false;
+    if(filter==='sub'&&s.kind!=='subagent')return false;
     if(filter==='cron'&&s.kind!=='cron')return false;
     if(filter==='pinned'&&!s.pinned)return false;
     if(filter==='unnamed'&&s.name)return false;
@@ -552,7 +628,7 @@ function render(){
     h+='<div class="it '+(s.key===selKey?'sel':'')+'" data-k="'+esc(s.key)+'" title="'+esc(title(s).slice(0,200))+'">'+
       '<div class="nm2 '+(s.name?'':'auto')+'">'+esc(title(s).slice(0,80))+'</div>'+
       (q&&ftres&&ftq.toLowerCase()===q?(()=>{const r=ftres.find(r=>r.key===s.key);return r?'<div class="ftsn">'+r.hits+' 处命中 · '+esc('…'+r.snips[0].text.replace(/[*`#>|]/g,'').replace(/\s+/g,' ')+'…').split(esc(ftq)).join('<mark>'+esc(ftq)+'</mark>')+'</div>':'';})():'')+
-      '<div class="sub"><span class="dot '+s.kind+'"></span>'+(rel(s.updatedAt)||'—')+(s.kind==='cron'?' · 定时':s.kind==='main'?' · 主会话':'')+'</div>'+
+      '<div class="sub"><span class="dot '+s.kind+'"></span>'+(rel(s.updatedAt)||'—')+(s.kind==='cron'?' · 定时':s.kind==='main'?' · 主会话':s.kind==='subagent'?' · 子任务':'')+'</div>'+
       '<div class="acts"><button title="改名" data-a="ren">✏️</button><button title="'+(s.pinned?'取消置顶':'置顶')+'" data-a="pin">📌</button></div></div>';
   }
   $('#list').innerHTML=h||'<div class="hint" style="padding:30px 12px;text-align:center">没有匹配的会话</div>';
@@ -634,11 +710,12 @@ $('#msgs').onclick=e=>{
 };
 $('#lb').onclick=()=>$('#lb').style.display='none';
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){$('#fv').style.display='none';$('#lb').style.display='none';$('#cronm').style.display='none';$('#usem').style.display='none';closePops();}
+  if(e.key==='Escape'){$('#subm').style.display='none';$('#logm').style.display='none';if(!memDirty())$('#memm').style.display='none';$('#fv').style.display='none';$('#lb').style.display='none';$('#cronm').style.display='none';$('#usem').style.display='none';closePops();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#newbtn').click();}
 });
 
 async function open(key){
+  setTimeout(loadSubs,300);
   if(queue.length){queue.length=0;renderQueue();}quote=null;editing=null;if(typeof renderQ==='function')renderQ();$('#main').classList.remove('home');newMode=false;setBusy(null);liveEl=null;
   selKey=key;render();const se=$('#list .it.sel');if(se)se.scrollIntoView({block:'nearest'});showHdr();$('#comp').style.display='block';subscribe(key);
   $('#msgs').innerHTML='<div class="empty hint" style="text-align:center;margin-top:20vh">加载中…</div>';
@@ -1008,6 +1085,118 @@ function fullSearch(){
   ftT=setTimeout(async()=>{try{const r=await api('/api/search?q='+encodeURIComponent(q));if($('#q').value.trim()!==q)return;ftq=q;ftres=r;render();}catch{}},350);
 }
 $('#q').oninput=()=>{render();fullSearch();};
+
+// ===================== 子任务面板 =====================
+let subAll=[],subParent='',subTimer=null;
+const SUBST={running:['run','运行中'],done:['ok','已完成'],aborted:['off','已停止'],error:['err','出错'],unknown:['off','未知']};
+function titleOfKey(k){const s=all.find(x=>x.key===k);return s?title(s).slice(0,40):k.split(':').pop();}
+async function loadSubs(){
+  try{subAll=await api('/api/subagents');}catch{return;}
+  const run=subAll.filter(s=>s.status==='running').length;
+  $('#subtoolN').style.display=subAll.length?'':'none';$('#subtoolN').textContent=run?run+' 运行中':subAll.length;
+  const mine=selKey?subAll.filter(s=>s.parent===selKey):[];const mr=mine.filter(s=>s.status==='running').length;
+  $('#subb').classList.toggle('show',mine.length>0);
+  $('#subb').innerHTML=(mr?'<span class="spin"></span>':'🤖')+' '+mine.length+' 个子任务'+(mr?'（'+mr+' 运行中）':'');
+  if($('#subm').style.display==='flex')renderSubs();
+}
+function renderSubs(){
+  const parents=[...new Set(subAll.map(s=>s.parent))];
+  $('#subfilter').innerHTML='<button class="ib" style="width:auto;padding:0 10px;font-size:12px'+(!subParent?';background:var(--sel);color:var(--acc)':'')+'" data-p="">全部 '+subAll.length+'</button>'+
+    (selKey&&subAll.some(s=>s.parent===selKey)?'<button class="ib" style="width:auto;padding:0 10px;font-size:12px'+(subParent===selKey?';background:var(--sel);color:var(--acc)':'')+'" data-p="'+esc(selKey)+'">当前会话</button>':'');
+  const list=subAll.filter(s=>!subParent||s.parent===subParent);
+  $('#subbody').innerHTML=list.length?list.map(s=>{const st=SUBST[s.status]||SUBST.unknown;
+    return '<div class="sa '+(s.status==='running'?'running':'')+'"><div class="sh">'+(s.status==='running'?'<span class="spin"></span>':'<span class="ico">🤖</span>')+'<b>'+esc(s.label||s.key.split(':').pop().slice(0,8))+'</b><span class="pill '+st[0]+'">'+st[1]+'</span></div>'+
+      '<div class="sm"><span>派出自：<a href="javascript:void 0" title="'+esc(titleOfKey(s.parent))+'" data-open="'+esc(s.parent)+'">'+esc(titleOfKey(s.parent))+'</a></span><span>'+(s.status==='running'&&s.startedAt?'已运行 '+Math.max(1,Math.round((Date.now()-s.startedAt)/1000))+' 秒':'更新于 '+fmtS(s.updatedAt))+'</span>'+(s.tokens?'<span>'+fmtN(s.tokens)+' tokens</span>':'')+(s.model?'<span>'+esc(s.model)+'</span>':'')+(s.tool?'<span>🔧 '+esc(s.tool)+'</span>':'')+'</div>'+
+      (s.task?'<div class="st"><span>任务</span>'+esc(s.task)+'</div>':'')+
+      (s.result&&s.status!=='running'?'<div class="st"><span>结果</span>'+esc(s.result)+'</div>':'')+(s.error?'<div class="st" style="color:var(--bad)"><span>错误</span>'+esc(s.error)+'</div>':'')+
+      '<div class="sb"><button class="tb" data-view="'+esc(s.key)+'">📄 查看完整记录</button>'+(s.status==='running'?'<button class="tb" data-stop="'+esc(s.key)+'" style="color:var(--bad)">⏹ 停止</button>':'')+'</div></div>';}).join(''):
+    '<div class="hint" style="padding:30px;text-align:center">还没有子任务。<br>Claw 遇到可以并行的工作（比如同时查几个网站、同时处理几个文件）时会派出子任务，进度会显示在这里。</div>';
+}
+function openSubs(parent){subParent=parent||'';$('#subm').style.display='flex';loadSubs();clearInterval(subTimer);subTimer=setInterval(loadSubs,3000);}
+$('#subtool').onclick=()=>openSubs('');
+$('#subb').onclick=()=>openSubs(selKey);
+$('#subclose').onclick=()=>{$('#subm').style.display='none';clearInterval(subTimer);};
+$('#subm').onclick=async e=>{
+  if(e.target.id==='subm'){$('#subm').style.display='none';clearInterval(subTimer);return;}
+  const f=e.target.closest('[data-p]');if(f){subParent=f.dataset.p;renderSubs();return;}
+  const o=e.target.closest('[data-open]');if(o){$('#subm').style.display='none';clearInterval(subTimer);open(o.dataset.open);return;}
+  const v=e.target.closest('[data-view]');if(v){$('#subm').style.display='none';clearInterval(subTimer);open(v.dataset.view);return;}
+  const s=e.target.closest('[data-stop]');if(s){if(!confirm('停止这个子任务？'))return;try{await api('/api/subagents/abort',{key:s.dataset.stop});toast('已请求停止');loadSubs();}catch(err){toast('⚠️ '+err.message);}}
+};
+setInterval(loadSubs,8000);
+
+// ===================== 记忆管理器 =====================
+let memFilesList=[],memCur=null,memOrig='',memPrev=false;
+const MEMWARN={'AGENTS.md':'⚠️ AGENTS.md 由 Genspark Claw 自动生成，Claw 升级时可能被覆盖。长期规则建议写在 MEMORY.md 或 USER.md。','SOUL.md':'这是 Claw 的「人格」设定，每次对话都会读取。修改后从下一条消息开始生效。','MEMORY.md':'长期记忆，每次对话开始都会完整读取——内容越长，每轮消耗越多 token。'};
+async function loadMemList(){
+  const r=await api('/api/memory/list');memFilesList=r.files;$('#memws').textContent=r.workspace;renderMemList();
+}
+function renderMemList(hits){
+  const groups={};for(const f of memFilesList)(groups[f.group]=groups[f.group]||[]).push(f);
+  const order=['长期记忆','核心设定','任务档案','每日笔记'];let h='';
+  if(hits){h='<div class="mg" style="padding:8px 10px 4px">搜索结果 · '+hits.length+' 个文件</div>'+(hits.length?hits.map(x=>'<div class="mf" data-rel="'+esc(x.rel)+'"><b>'+esc(x.rel)+'</b><span>'+esc(x.group)+'</span></div>'+x.hits.map(y=>'<div class="mh2" data-rel="'+esc(x.rel)+'" data-line="'+y.line+'">'+y.line+'：'+esc(y.text)+'</div>').join('')).join(''):'<div class="hint" style="padding:12px">没有找到</div>');}
+  else for(const g of order)if(groups[g])h+='<div class="mg" style="padding:10px 10px 4px">'+g+' · '+groups[g].length+'</div>'+groups[g].map(f=>'<div class="mf '+(memCur&&memCur.rel===f.rel?'on':'')+'" data-rel="'+esc(f.rel)+'"><b>'+esc(f.rel.replace(/^(memory|tasks)\//,''))+'</b><span>'+rel(f.updatedAt)+' · '+(f.size/1024).toFixed(1)+'K</span></div>').join('');
+  $('#memlist').innerHTML=h;
+}
+const nl=s=>String(s||'').replace(/\r\n/g,'\n');
+function memDirty(){const d=memCur&&nl($('#memed').value)!==nl(memOrig);$('#memdirty').textContent=d?'● 未保存':'';return d;}
+async function openMem(relp,line){
+  if(memDirty()&&!confirm('当前文件有未保存的修改，放弃修改？'))return;
+  try{const r=await api('/api/memory/file?rel='+encodeURIComponent(relp));memCur=r;memOrig=r.content;
+    const ed=$('#memed');ed.disabled=false;ed.value=r.content;$('#mempath').textContent=r.rel+' · 修改于 '+fmtS(r.updatedAt);$('#mempath').title=r.path;memDirty();
+    const w=MEMWARN[relp];$('#memwarn').style.display=w?'block':'none';$('#memwarn').textContent=w||'';
+    if(memPrev)$('#memprev').innerHTML=md(r.content);
+    renderMemList();
+    if(line){const ls=r.content.split('\n');let pos=0;for(let i=0;i<line-1&&i<ls.length;i++)pos+=ls[i].length+1;memPrev&&togglePrev();ed.focus();ed.setSelectionRange(pos,pos+(ls[line-1]||'').length);ed.scrollTop=Math.max(0,(line-5)*21);}
+  }catch(e){toast('⚠️ '+e.message);}
+}
+function togglePrev(){memPrev=!memPrev;$('#memprev').style.display=memPrev?'block':'none';$('#memed').style.display=memPrev?'none':'block';$('#memprevb').textContent=memPrev?'✎ 编辑':'👁 预览';if(memPrev)$('#memprev').innerHTML=md($('#memed').value);}
+$('#memtool').onclick=async()=>{$('#memm').style.display='flex';await loadMemList();if(!memCur){const f=memFilesList.find(x=>x.rel==='MEMORY.md')||memFilesList[0];if(f)openMem(f.rel);}};
+$('#memclose').onclick=()=>{if(memDirty()&&!confirm('有未保存的修改，确定关闭？'))return;$('#memm').style.display='none';};
+$('#memlist').onclick=e=>{const x=e.target.closest('[data-rel]');if(x)openMem(x.dataset.rel,+x.dataset.line||0);};
+$('#memed').oninput=memDirty;
+$('#memed').onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();$('#memsave').click();}};
+$('#memprevb').onclick=togglePrev;
+$('#memreload').onclick=()=>{if(memCur){memOrig=$('#memed').value;openMem(memCur.rel);}};
+setInterval(()=>{const b=document.getElementById('memsave');if(b)b.disabled=!memDirty();},500);
+$('#memsave').onclick=async()=>{
+  if(!memCur)return;if(!memDirty()){toast('没有修改');return;}
+  try{const crlf=/\r\n/.test(memOrig);const body=crlf?nl($('#memed').value).replace(/\n/g,'\r\n'):$('#memed').value;const r=await api('/api/memory/file',{rel:memCur.rel,content:body,baseUpdatedAt:memCur.updatedAt});memCur.updatedAt=r.updatedAt;memOrig=body;memDirty();toast('✓ 已保存（原文件已备份）');loadMemList();}
+  catch(e){toast('⚠️ '+e.message);}
+};
+let memqT=null;$('#memq').oninput=()=>{clearTimeout(memqT);const q=$('#memq').value.trim();if(q.length<2){renderMemList();return;}memqT=setTimeout(async()=>{try{renderMemList(await api('/api/memory/search?q='+encodeURIComponent(q)));}catch{}},300);};
+
+// ===================== 实时日志 =====================
+let logCursor=null,logLines=[],logTimer=null,logFollow=true;
+const LVLN={TRACE:0,DEBUG:1,INFO:2,WARN:3,ERROR:4,FATAL:5};
+async function fetchLogs(reset){
+  const src=$('#logsrc').value;
+  if(reset){logCursor=null;logLines=[];}
+  try{const r=await api('/api/logs?src='+src+(logCursor!=null&&src==='gateway'?'&cursor='+logCursor:''));
+    $('#logfile').textContent=r.file||'';
+    if(src==='gateway'){logCursor=r.cursor;logLines=logLines.concat(r.lines);}else logLines=r.lines;
+    if(logLines.length>3000)logLines=logLines.slice(-3000);
+    renderLogs();
+  }catch(e){$('#logfile').textContent='读取失败：'+e.message;}
+}
+function renderLogs(){
+  const q=$('#logq').value.trim().toLowerCase(),lv=$('#loglvl').value,min=lv?LVLN[lv]:-1;
+  const vis=logLines.filter(l=>(LVLN[l.lvl]??2)>=min&&(!q||(l.msg+' '+l.src).toLowerCase().includes(q)));
+  const box=$('#logbox'),atBottom=box.scrollHeight-box.scrollTop-box.clientHeight<60;
+  const hl=s=>{s=esc(s);if(!q)return s;const eq=esc(q);return s.split(eq).join('<mark>'+eq+'</mark>');};
+  box.innerHTML=vis.slice(-1500).map(l=>'<div class="lg '+esc(l.lvl)+'"><span class="lt">'+esc((l.t||'').replace('T',' ').slice(5,19))+'</span><span class="ll">'+esc(l.lvl)+'</span>'+(l.src?'<span class="ls" title="'+esc(l.src)+'">'+esc(l.src)+'</span>':'')+'<span>'+hl(l.msg.slice(0,2000))+'</span></div>').join('')||'<div style="padding:20px;color:#71717a">没有匹配的日志</div>';
+  $('#logcount').textContent='显示 '+Math.min(vis.length,1500)+' / '+logLines.length+' 行';
+  if(logFollow&&atBottom!==false)box.scrollTop=box.scrollHeight;
+}
+function startLogs(){clearInterval(logTimer);if(logFollow)logTimer=setInterval(()=>fetchLogs(false),2000);}
+$('#logtool').onclick=()=>{$('#logm').style.display='flex';fetchLogs(true).then(()=>{$('#logbox').scrollTop=1e9;});startLogs();};
+$('#logclose').onclick=()=>{$('#logm').style.display='none';clearInterval(logTimer);};
+$('#logm').onclick=e=>{if(e.target.id==='logm'){$('#logm').style.display='none';clearInterval(logTimer);}};
+$('#logsrc').onchange=()=>fetchLogs(true);
+$('#loglvl').onchange=renderLogs;$('#logq').oninput=renderLogs;
+$('#logfollow').onclick=()=>{logFollow=!logFollow;$('#logfollow').classList.toggle('on',logFollow);$('#logfollow').textContent=logFollow?'⏵ 实时跟随':'⏸ 已暂停';startLogs();if(logFollow)$('#logbox').scrollTop=1e9;};
+$('#logcopy').onclick=()=>{navigator.clipboard.writeText($('#logbox').innerText).then(()=>toast('已复制当前显示的日志'));};
+$('#logclear').onclick=()=>{logLines=[];renderLogs();};
 
 // ---------- 上下文占用环 ----------
 const fmtN=n=>n>=1e6?(n/1e6).toFixed(n>=1e7?0:2)+'M':n>=1e3?(n/1e3).toFixed(n>=1e5?0:1)+'K':String(n||0);
