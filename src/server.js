@@ -538,6 +538,10 @@ const routes = {
     if (!f) return send(res, 400, { error: 'unknown source' });
     send(res, 200, { src, file: path.join(STUDIO_DATA, f), cursor: null, lines: tailFile(path.join(STUDIO_DATA, f), 500) });
   },
+  'GET /api/cron/runs': async (u, res) => {
+    const r = await gw.call('cron.runs', { id: u.searchParams.get('id'), limit: 20 });
+    send(res, 200, (r.entries || []).map(e => ({ ts: e.ts, runAtMs: e.runAtMs, status: e.status, error: e.error || '', summary: e.summary || '', durationMs: e.durationMs, model: e.model || '', sessionKey: e.sessionKey || '' })));
+  },
   'POST /api/abort': async (u, res, req) => {
     const { key, runId } = JSON.parse(await readBody(req));
     await gw.call('chat.abort', runId ? { sessionKey: key, runId } : { sessionKey: key });
