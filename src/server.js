@@ -325,6 +325,45 @@ function listSubagents(parent) {
   return out.sort((a, b) => (a.status === 'running' ? 0 : 1) - (b.status === 'running' ? 0 : 1) || b.updatedAt - a.updatedAt);
 }
 
+// ---- 后台任务：扫描近 N 小时对话里的后台 exec（"Command still running (session X, pid N)"），用 PID 判断是否仍在运行 ----
+const bgCache = {};
+function pidAlive(pid) { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } }
+function scanBg(file, key) {
+  let st; try { st = fs.statSync(file); } catch { return []; }
+  const c = bgCache[file]; if (c && c.mtime === st.mtimeMs) return c.items;
+  const items = [], byId = {}, bySess = {};
+  for (const l of fs.readFileSync(file, 'utf8').split('\n')) {
+    if (!l.includes('toolCall') && !l.includes('toolResult')) continue;
+    let e; try { e = JSON.parse(l); } catch { continue; } const m = e.message; if (!m) continue;
+    if (m.role === 'assistant' && Array.isArray(m.content)) for (const x of m.content) if (x.type === 'toolCall') byId[x.id] = { name: x.name, args: x.arguments || {}, ts: e.timestamp };
+    if (m.role === 'toolResult') {
+      const call = byId[m.toolCallId]; const txt = Array.isArray(m.content) ? m.content.filter(c => c.type === 'text').map(c => c.text).join('\n') : String(m.content || '');
+      if (call && call.name === 'exec') { const r = txt.match(/Command still running \(session ([\w-]+), pid (\d+)\)/);
+        if (r) { const it = { key, session: r[1], pid: +r[2], command: String(call.args.command || '').slice(0, 400), startedAt: Date.parse(call.ts) || 0, exited: null }; items.push(it); bySess[r[1]] = it; } }
+      if (call && call.name === 'process') { const sid = call.args.sessionId; const it = bySess[sid]; const x = txt.match(/(?:Process exited with code|exited with code) (-?\d+)/); if (it && x) it.exited = +x[1]; if (it && call.args.action === 'kill') it.exited = it.exited ?? 'killed'; }
+    }
+  }
+  bgCache[file] = { mtime: st.mtimeMs, items }; return items;
+}
+function listBg(hours) {
+  const idx = loadIndex(), since = Date.now() - hours * 3600e3, out = [];
+  for (const [key, v] of Object.entries(idx)) { if ((v.updatedAt || 0) < since) continue;
+    for (const it of scanBg(v.sessionFile || path.join(SDIR, v.sessionId + '.jsonl'), key)) if (it.startedAt >= since) out.push(Object.assign({}, it, { running: it.exited == null && pidAlive(it.pid) })); }
+  return out.sort((a, b) => b.running - a.running || b.startedAt - a.startedAt);
+}
+
+// ---- 执行审批：订阅网关 exec.approval.* 事件 ----
+const approvals = new Map();
+let apprHooked = false;
+function hookApprovals() {
+  if (apprHooked) return; apprHooked = true;
+  gw.on(f => {
+    if (f.event === 'exec.approval.requested' && f.payload && f.payload.id) approvals.set(f.payload.id, f.payload);
+    if (f.event === 'exec.approval.resolved' && f.payload) approvals.delete(f.payload.id);
+  });
+}
+const listApprovals = () => { const now = Date.now(); for (const [k, a] of approvals) if (a.expiresAtMs && a.expiresAtMs < now - 5000) approvals.delete(k); return [...approvals.values()]; };
+
 // ---- 记忆文件：只允许 workspace 下的 .md ----
 function memFiles() {
   const out = [], W = WORKSPACE;
@@ -416,9 +455,10 @@ const routes = {
     const key = u.searchParams.get('key');
     res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
     res.write(': ok\n\n');
-    gw.connect().catch(e => res.write('event: gwerror\ndata: ' + JSON.stringify(e.message) + '\n\n'));
+    hookApprovals(); gw.connect().catch(e => res.write('event: gwerror\ndata: ' + JSON.stringify(e.message) + '\n\n'));
     const off = gw.on(f => {
       const pl = f.payload || {};
+      if (f.event === 'exec.approval.requested' || f.event === 'exec.approval.resolved') { res.write('data: ' + JSON.stringify({ event: f.event, payload: pl }) + '\n\n'); return; }
       if ((f.event === 'chat' || f.event === 'agent') && (!key || pl.sessionKey === key))
         res.write('data: ' + JSON.stringify({ event: f.event, payload: pl }) + '\n\n');
     });
@@ -513,6 +553,20 @@ const routes = {
     }
     out.sort((a, b) => b.hits - a.hits);
     send(res, 200, out);
+  },
+  'GET /api/bg': (u, res) => { hookLive(); const runs = [...liveRuns.entries()].map(([key, r]) => ({ key, startedAt: r.startedAt, tool: r.tool })); send(res, 200, { runs, procs: listBg(Math.min(168, +u.searchParams.get('hours') || 24)) }); },
+  'POST /api/bg/kill': async (u, res, req) => {
+    const { pid, key, session } = JSON.parse(await readBody(req));
+    const it = listBg(168).find(x => x.pid === +pid && x.key === key && x.session === session);
+    if (!it) return send(res, 404, { error: '没有找到这个后台任务（只能结束 Claw 启动的后台命令）' });
+    if (!it.running) return send(res, 400, { error: '它已经结束了' });
+    require('child_process').execFile('taskkill.exe', ['/PID', String(it.pid), '/T', '/F'], { windowsHide: true }, (err, out, er) => send(res, err ? 500 : 200, err ? { error: (er || err.message).toString().trim() } : { ok: true }));
+  },
+  'GET /api/approvals': (u, res) => { hookApprovals(); gw.connect().catch(() => {}); send(res, 200, listApprovals()); },
+  'POST /api/approvals/resolve': async (u, res, req) => {
+    const { id, decision } = JSON.parse(await readBody(req));
+    if (!['allow-once', 'allow-always', 'deny'].includes(decision)) return send(res, 400, { error: '无效的决定' });
+    await gw.call('exec.approval.resolve', { id, decision }); approvals.delete(id); send(res, 200, { ok: true });
   },
   'GET /api/subagents': (u, res) => send(res, 200, listSubagents(u.searchParams.get('parent') || '')),
   'POST /api/subagents/abort': async (u, res, req) => {

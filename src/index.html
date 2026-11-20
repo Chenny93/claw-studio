@@ -319,6 +319,16 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .sa .sh{display:flex;align-items:center;gap:8px}.sa .sh>.spin,.sa .sh>.ico{width:18px;flex-shrink:0;text-align:center}.sa .sm a{display:inline-block;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}.sa .sh b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sa .sm{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;gap:12px;flex-wrap:wrap}
 .sa .st{font-size:12.5px;color:var(--fg2);margin-top:8px;line-height:1.55}.sa .st span{color:var(--mut);font-weight:600;margin-right:6px}
+#apprs{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;flex-direction:column;gap:10px;width:420px;max-width:calc(100vw - 36px)}
+.ap{background:var(--elev);border-radius:14px;padding:14px 16px;box-shadow:0 0 0 1px var(--bd),0 12px 32px rgba(0,0,0,.22);animation:in .2s;border-left:4px solid #f59e0b}
+.ap.exp{border-left-color:var(--bad);opacity:.75}
+.ap .ah{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px}.ap .cd{margin-left:auto;font:600 13px Consolas,monospace;color:#f59e0b}.ap.exp .cd{color:var(--bad)}
+.ap pre{margin:8px 0;max-height:160px;overflow:auto;font:12px/1.45 Consolas,monospace;background:var(--bd2);border-radius:8px;padding:8px;white-space:pre-wrap;word-break:break-all}
+.ap .am{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:2px}.ap .am span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap .ab{display:flex;gap:6px;margin-top:10px}.ap .ab button{flex:1;height:32px;border-radius:9px;border:1px solid var(--bd);background:var(--panel);font-size:12.5px;color:var(--fg)}
+.ap .ab .y{background:var(--acc);border-color:var(--acc);color:#fff}.ap .ab .n{color:var(--bad)}.ap .ab button:disabled{opacity:.5}
+.ap .cbar{height:3px;margin-top:10px;border-radius:2px;background:var(--bd2);overflow:hidden}.ap .cbar i{display:block;height:100%;background:#f59e0b;transition:width 1s linear}
+.bgc{font:12px Consolas,monospace;color:var(--fg2);margin-top:6px;background:var(--bd2);border-radius:8px;padding:6px 8px;white-space:pre-wrap;word-break:break-all;max-height:84px;overflow:auto}
 .sa .sb{display:flex;gap:6px;margin-top:10px}
 .pill.run{background:color-mix(in srgb,var(--acc) 18%,transparent);color:var(--acc)}
 /* 记忆管理器 */
@@ -472,7 +482,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   <div class="brand"><div class="logo" id="homebtn" title="回到首页">🦞</div><div class="nm">Claw Studio<small>for Genspark Claw</small></div>
     <button class="ib" id="stbtn" title="自检：检查 Studio 各功能是否正常（升级 Claw 后建议跑一次）">🩺</button><button class="ib" id="usebtn" title="每日 Token 用量">📊</button><button class="ib" id="cronbtn" title="定时任务">⏰</button>
     <button class="ib" id="themebtn" title="切换主题">🌓</button></div>
-  <div class="toolrow"><button id="subtool" title="查看所有子任务的进度与结果">🤖 子任务 <span class="n" id="subtoolN" style="display:none"></span></button><button id="memtool" title="浏览、搜索、编辑 Claw 的记忆文件">🧠 记忆</button><button id="logtool" title="实时查看 Claw 运行日志">📜 日志</button></div>
+  <div class="toolrow"><button id="subtool" title="查看所有子任务的进度与结果">🤖 子任务 <span class="n" id="subtoolN" style="display:none"></span></button><button id="bgtool" title="正在运行的 Claw 任务和后台命令">⏳ 后台 <span class="n" id="bgtoolN" style="display:none"></span></button><button id="memtool" title="浏览、搜索、编辑 Claw 的记忆文件">🧠 记忆</button><button id="logtool" title="实时查看 Claw 运行日志">📜 日志</button></div>
   <button id="newbtn">✏️ 新对话 <span class="k">Ctrl K</span></button>
   <div class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="搜索会话（标题 + 全部聊天内容）…"></div>
   <div id="filters"><button data-f="all" class="on">全部</button><button data-f="chat">对话</button><button data-f="pinned">置顶</button><button data-f="unnamed">未命名</button><button data-f="cron">定时</button><button data-f="sub">子任务</button></div>
@@ -531,6 +541,11 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   <div class="mh"><h3>🤖 子任务</h3><div id="subfilter" style="display:flex;gap:4px;margin-right:10px"></div><button class="ib" id="subclose">✕</button></div>
   <div class="mb" id="subbody"></div>
 </div></div>
+<div class="modal" id="bgm"><div class="card">
+  <div class="mh"><h3>⏳ 后台任务</h3><div style="display:flex;gap:4px;margin-left:auto;margin-right:10px" id="bghrs"><button class="ib" data-h="24" style="width:auto;padding:0 10px;font-size:12px">24 小时</button><button class="ib" data-h="168" style="width:auto;padding:0 10px;font-size:12px">7 天</button></div><button class="ib" id="bgclose">✕</button></div>
+  <div class="mb" id="bgbody"></div>
+</div></div>
+<div id="apprs"></div>
 <div class="modal" id="memm"><div class="card">
   <div class="mh"><h3>🧠 记忆管理器</h3><span class="hint" id="memws" style="margin-right:12px"></span><button class="ib" id="memclose">✕</button></div>
   <div class="memw">
@@ -753,10 +768,57 @@ $('#msgs').onclick=e=>{
   const sg=e.target.closest('.sugg button');if(sg){$('#inp').value=sg.dataset.s;autosize();$('#inp').focus();}
 };
 $('#lb').onclick=()=>$('#lb').style.display='none';
+// ---------- 后台任务面板（借鉴 Code Mode：长任务转后台，边跑边聊）----------
+let bgData={runs:[],procs:[]},bgHours=24,bgTimer=null;
+const dur=ms=>{const s=Math.max(0,Math.round(ms/1000));return s<60?s+' 秒':s<3600?Math.floor(s/60)+' 分 '+(s%60)+' 秒':Math.floor(s/3600)+' 小时 '+Math.floor(s%3600/60)+' 分';};
+async function loadBg(){try{bgData=await api('/api/bg?hours='+bgHours);}catch{return;}const n=bgData.runs.length+bgData.procs.filter(p=>p.running).length;$('#bgtoolN').style.display=n?'':'none';$('#bgtoolN').textContent=n;if($('#bgm').style.display==='flex')renderBg();}
+function renderBg(){
+  document.querySelectorAll('#bghrs button').forEach(b=>{b.style.background=+b.dataset.h===bgHours?'var(--sel)':'';b.style.color=+b.dataset.h===bgHours?'var(--acc)':'';});
+  const now=Date.now();let h='<div class="grp" style="padding:0 0 8px">🧠 正在思考的会话（'+bgData.runs.length+'）</div>';
+  h+=bgData.runs.length?bgData.runs.map(r=>'<div class="sa running"><div class="sh"><span class="spin"></span><b>'+esc(titleOfKey(r.key))+'</b><span class="pill run">运行中</span></div><div class="sm"><span>已运行 '+dur(now-r.startedAt)+'</span>'+(r.tool?'<span>正在用：'+esc(r.tool)+'</span>':'')+'</div><div class="sb"><button class="ib" style="width:auto;padding:0 12px;font-size:12px" data-open="'+esc(r.key)+'">打开会话</button></div></div>').join(''):'<div class="hint" style="padding:4px 0 14px">没有会话在运行</div>';
+  const pr=bgData.procs;h+='<div class="grp" style="padding:12px 0 8px">⚙️ 后台命令（'+pr.filter(p=>p.running).length+' 个运行中 / 共 '+pr.length+'）</div>';
+  h+=pr.length?pr.map(p=>{const st=p.running?['run','运行中']:p.exited==='killed'?['off','已结束']:p.exited==null?['off','已退出']:p.exited===0?['ok','退出码 0']:['err','退出码 '+p.exited];
+    return '<div class="sa '+(p.running?'running':'')+'"><div class="sh">'+(p.running?'<span class="spin"></span>':'<span class="ico">⚙️</span>')+'<b>PID '+p.pid+' · '+esc(p.session)+'</b><span class="pill '+st[0]+'">'+st[1]+'</span></div>'+
+      '<div class="sm"><span>来自：<a href="javascript:void 0" data-open="'+esc(p.key)+'">'+esc(titleOfKey(p.key))+'</a></span><span>'+(p.running?'已运行 '+dur(now-p.startedAt):'启动于 '+fmtS(p.startedAt))+'</span></div>'+
+      '<div class="bgc">'+esc(p.command)+'</div>'+(p.running?'<div class="sb"><button class="ib" style="width:auto;padding:0 12px;font-size:12px;color:var(--bad)" data-kill="'+p.pid+'" data-k="'+esc(p.key)+'" data-s="'+esc(p.session)+'">⏹ 结束进程</button></div>':'')+'</div>';}).join(''):'<div class="hint">这段时间内没有后台命令</div>';
+  h+='<div class="hint" style="margin-top:12px;font-size:11px">后台命令是 Claw 用 exec 放到后台运行的长任务。是否在运行按 PID 判断；结束进程会连同子进程一起结束。</div>';
+  $('#bgbody').innerHTML=h;
+}
+$('#bgtool').onclick=()=>{$('#bgm').style.display='flex';loadBg();clearInterval(bgTimer);bgTimer=setInterval(loadBg,3000);};
+const closeBg=()=>{$('#bgm').style.display='none';clearInterval(bgTimer);};
+$('#bgclose').onclick=closeBg;
+$('#bgm').onclick=async e=>{
+  if(e.target.id==='bgm'){closeBg();return;}
+  const hb=e.target.closest('#bghrs button');if(hb){bgHours=+hb.dataset.h;loadBg();return;}
+  const o=e.target.closest('[data-open]');if(o){closeBg();open(o.dataset.open);return;}
+  const k=e.target.closest('[data-kill]');if(k){if(!confirm('确定结束进程 PID '+k.dataset.kill+'（连同子进程）？'))return;try{await api('/api/bg/kill',{pid:+k.dataset.kill,key:k.dataset.k,session:k.dataset.s});toast('已结束进程');}catch(err){toast('结束失败：'+err.message);}loadBg();}
+};
+setInterval(()=>{if($('#bgm').style.display!=='flex')loadBg();},15000);setTimeout(loadBg,1200);
+
+// ---------- 执行审批卡片（倒计时，超时由网关自动拒绝）----------
+const apprMap=new Map();
+function apprCard(a){
+  const r=a.request||{};const d=document.createElement('div');d.className='ap';d.dataset.id=a.id;
+  const cmd=r.command||(r.systemRunPlan&&r.systemRunPlan.commandText)||'（无命令文本）';
+  d.innerHTML='<div class="ah">🛡️ Claw 请求执行命令<span class="cd"></span></div><pre>'+esc(cmd)+'</pre><div class="am">'+(r.cwd?'<span>目录：'+esc(r.cwd)+'</span>':'')+(r.sessionKey?'<span>会话：'+esc(titleOfKey(r.sessionKey))+'</span>':'')+'<span>主机：'+esc(r.host||'gateway')+(r.security?' · 安全级别 '+esc(r.security):'')+'</span></div>'+
+    '<div class="ab"><button class="y" data-d="allow-once">允许一次</button><button data-d="allow-always">总是允许</button><button class="n" data-d="deny">拒绝</button></div><div class="cbar"><i></i></div>';
+  d.onclick=async e=>{const b=e.target.closest('[data-d]');if(!b)return;if(b.dataset.d==='allow-always'&&!confirm('「总是允许」会把这条命令加入白名单，以后不再询问。确定吗？\n\n'+cmd.slice(0,300)))return;
+    d.querySelectorAll('button').forEach(x=>x.disabled=true);try{await api('/api/approvals/resolve',{id:a.id,decision:b.dataset.d});toast(b.dataset.d==='deny'?'已拒绝':'已允许');removeAppr(a.id);}catch(err){toast('提交失败：'+err.message);d.querySelectorAll('button').forEach(x=>x.disabled=false);}};
+  return d;
+}
+function addAppr(a){if(!a||!a.id||apprMap.has(a.id))return;const el=apprCard(a);apprMap.set(a.id,{a,el,total:Math.max(1000,(a.expiresAtMs||0)-(a.createdAtMs||Date.now()))});$('#apprs').appendChild(el);tickAppr();try{new Notification('Claw 请求执行命令',{body:((a.request||{}).command||'').slice(0,120)});}catch{}}
+function removeAppr(id){const x=apprMap.get(id);if(x){x.el.remove();apprMap.delete(id);}}
+function tickAppr(){const now=Date.now();for(const [id,x] of apprMap){const left=(x.a.expiresAtMs||0)-now;const cd=x.el.querySelector('.cd');
+  if(!x.a.expiresAtMs){cd.textContent='';continue;}
+  if(left<=0){x.el.classList.add('exp');cd.textContent='已超时 · 自动拒绝';x.el.querySelectorAll('button').forEach(b=>b.disabled=true);if(left<-8000)removeAppr(id);continue;}
+  const s=Math.ceil(left/1000);cd.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');x.el.querySelector('.cbar i').style.width=(left/x.total*100)+'%';}}
+setInterval(tickAppr,1000);
+(function apprStream(){const ev=new EventSource('/api/events?key=__approvals__');ev.onmessage=e=>{const o=JSON.parse(e.data);if(o.event==='exec.approval.requested')addAppr(o.payload);if(o.event==='exec.approval.resolved')removeAppr(o.payload&&o.payload.id);};ev.onerror=()=>{};})();
+api('/api/approvals').then(l=>l.forEach(addAppr)).catch(()=>{});
 $('#rawbtn').onclick=()=>setRawView(!rawView);
 $('#rawbtn').classList.toggle('on',rawView);
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){$('#subm').style.display='none';$('#logm').style.display='none';if(!memDirty())$('#memm').style.display='none';$('#fv').style.display='none';$('#lb').style.display='none';$('#cronm').style.display='none';$('#usem').style.display='none';closePops();}
+  if(e.key==='Escape'){$('#subm').style.display='none';$('#logm').style.display='none';if(!memDirty())$('#memm').style.display='none';$('#fv').style.display='none';$('#lb').style.display='none';$('#cronm').style.display='none';$('#usem').style.display='none';if($('#bgm').style.display==='flex')closeBg();closePops();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#newbtn').click();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();setRawView(!rawView);}
 });
