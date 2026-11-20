@@ -6,24 +6,6 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const gw = require('./gw');
 const C = require('./config');
 const { STATE, SDIR, WORKSPACE, LOGDIR, CLAW_EXE, ASAR, PORT } = C;
-
-// ---------- 与 Claw 保持同一运行环境（代理变量、node 包装器）----------
-function applyClawEnv(exe) {
-  exe = exe || process.execPath;
-  if (!process.env.GENCLAW_ELECTRON_BIN && exe) process.env.GENCLAW_ELECTRON_BIN = exe;   // Claw 的 node.cmd / gsk 包装脚本需要它
-  try {
-    const bin = path.join(process.env.APPDATA || '', 'Genspark Claw', 'bin');
-    const gskBin = path.join(process.env.APPDATA || '', 'Genspark Claw', 'bundled-resources', 'openclaw', 'node_modules', '.bin');
-    const parts = (process.env.PATH || '').split(';');
-    for (const p of [gskBin, bin]) if (fs.existsSync(p) && !parts.some(x => x.toLowerCase() === p.toLowerCase())) parts.unshift(p);
-    process.env.PATH = parts.join(';');
-  } catch {}
-  try {
-    const t = fs.readFileSync(path.join(STATE, 'openclaw.json'), 'utf8');
-    const m = t.match(/["']?\benv["']?\s*:\s*\{[\s\S]*?["']?\bvars["']?\s*:\s*\{([\s\S]*?)\}/);
-    if (m) for (const kv of m[1].matchAll(/["']?([A-Z_][A-Z0-9_]*)["']?\s*:\s*["']([^"']*)["']/g)) if (!process.env[kv[1]]) process.env[kv[1]] = kv[2];
-  } catch {}
-}
 fs.mkdirSync(C.DATA_DIR, { recursive: true });
 const UPLOADS = path.join(C.DATA_DIR, 'uploads');
 const META = path.join(C.DATA_DIR, 'meta.json');
@@ -76,20 +58,50 @@ function parseEntry(e) {
   const files = attached.filter(p => !IMG_EXT.test(p)).map(p => { let size = null; try { size = fs.statSync(p).size; } catch {} return { path: p, name: p.split('\\').pop(), size }; });
   return { role, text, images, files, ts: e.timestamp };
 }
+// 工具调用：assistant.toolCall + toolResult 按顺序归到下一条 Claw 文字回复上（截断，避免前端过大）
+const clip = (x, n) => { const t = typeof x === 'string' ? x : JSON.stringify(x); return t.length > n ? t.slice(0, n) + '\n…（共 ' + t.length.toLocaleString() + ' 字符，已截断）' : t; };
 function readTranscript(file, limitFirst) {
   const out = [];
   if (!file || !fs.existsSync(file)) return out;
+  let tools = [], byId = {};
+  const flush = ts => { if (tools.length) { out.push({ role: 'assistant', text: '', images: [], files: [], ts, tools }); tools = []; byId = {}; } };
   for (const l of fs.readFileSync(file, 'utf8').split('\n')) {
     if (!l.trim()) continue;
     let e; try { e = JSON.parse(l); } catch { continue; }
     if (e.type !== 'message' || !e.message) continue;
-    if (e.message.role !== 'user' && e.message.role !== 'assistant') continue;
+    const m = e.message;
+    if (!limitFirst && m.role === 'toolResult') {
+      const t = byId[m.toolCallId]; const txt = Array.isArray(m.content) ? m.content.filter(c => c.type === 'text').map(c => c.text).join('\n') : String(m.content || '');
+      if (t) { t.result = clip(txt, 3000); t.resultLen = txt.length; t.error = !!m.isError; }
+      continue;
+    }
+    if (m.role !== 'user' && m.role !== 'assistant') continue;
+    if (!limitFirst && m.role === 'assistant' && Array.isArray(m.content))
+      for (const c of m.content) if (c.type === 'toolCall') { const t = { id: c.id, name: c.name, args: clip(c.arguments || {}, 1500), ts: e.timestamp }; tools.push(t); byId[c.id] = t; }
+    if (m.role === 'user') flush(e.timestamp);
     const r = parseEntry(e);
     if (!r.text.trim() && !r.images.length && !r.files.length) continue;
+    if (m.role === 'assistant' && tools.length) { r.tools = tools; tools = []; byId = {}; }
     out.push(r);
     if (limitFirst && out.length >= limitFirst) break;
   }
+  flush(Date.now());
   return out;
+}
+
+// 每轮起始成本：来自 sessions.json 的 systemPromptReport（字符数）+ 最近一次实际 usage
+function ctxCost(key) {
+  const v = loadIndex()[key]; if (!v) return null;
+  const r = v.systemPromptReport || null;
+  let last = null; try { const file = v.sessionFile || path.join(SDIR, v.sessionId + '.jsonl'); const st = fs.statSync(file), len = Math.min(st.size, 400000), b = Buffer.alloc(len), fd = fs.openSync(file, 'r'); fs.readSync(fd, b, 0, len, st.size - len); fs.closeSync(fd);
+    for (const l of b.toString('utf8').split('\n')) { if (!l.includes('"usage"')) continue; try { const m = JSON.parse(l).message; if (m && m.role === 'assistant' && m.usage) last = m.usage; } catch {} } } catch {}
+  if (!r) return { report: null, last };
+  const sp = r.systemPrompt || {}, files = (r.injectedWorkspaceFiles || []).filter(f => !f.missing).map(f => ({ name: f.name, chars: f.injectedChars || 0, raw: f.rawChars || 0, truncated: !!f.truncated }));
+  const skills = (r.skills && r.skills.entries || []).map(k => ({ name: k.name, chars: k.blockChars || 0 })).sort((a, b) => b.chars - a.chars);
+  const tools = (r.tools && r.tools.entries || []).map(t => ({ name: t.name, chars: (t.summaryChars || 0) + (t.schemaChars || 0) })).sort((a, b) => b.chars - a.chars);
+  const fileChars = files.reduce((a, f) => a + f.chars, 0), skillChars = (r.skills && r.skills.promptChars) || 0, toolChars = ((r.tools && r.tools.schemaChars) || 0);
+  return { report: { at: r.generatedAt, model: r.model, total: (sp.chars || 0) + toolChars, systemChars: sp.chars || 0, fileChars, skillChars, toolChars,
+    otherChars: Math.max(0, (sp.chars || 0) - fileChars - skillChars), files, skills, tools, maxPerFile: r.bootstrapMaxChars, truncated: (r.bootstrapTruncation || {}).truncatedFiles || 0 }, last };
 }
 
 const previewCache = {};
@@ -471,6 +483,7 @@ const routes = {
     const d = writeWs(p || null);
     send(res, 200, { ok: true, path: d.path });
   },
+  'GET /api/ctxcost': (u, res) => send(res, 200, ctxCost(u.searchParams.get('key')) || { report: null }),
   'GET /api/usage': (u, res) => send(res, 200, getUsage(Math.min(90, +u.searchParams.get('days') || 30))),
   'GET /api/selftest': async (u, res) => {
     if (u.searchParams.get('last')) { try { return send(res, 200, JSON.parse(fs.readFileSync(SELFTEST_FILE, 'utf8'))); } catch { return send(res, 200, null); } }
@@ -573,4 +586,4 @@ http.createServer(async (req, res) => {
   if (!h) return send(res, 404, { error: 'not found' });
   try { await h(u, res, req); }
   catch (e) { if (!res.headersSent) send(res, 502, { error: e.message }); }
-}).listen(PORT, '127.0.0.1', () => console.log('Claw Studio: http://127.0.0.1:' + PORT));
+}).listen(PORT, '127.0.0.1', () => console.log('Claw 会话管理器: http://127.0.0.1:' + PORT));

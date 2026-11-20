@@ -94,11 +94,29 @@ button{cursor:pointer}
 #ctxb:hover{background:var(--hov)}
 #ctxb svg{transform:rotate(-90deg)}
 #ctxb .rt{stroke:var(--bd)}#ctxb .rv{transition:stroke-dashoffset .4s,stroke .3s}
-#ctxpop{position:absolute;right:160px;bottom:calc(100% + 10px);width:330px;display:none;background:var(--elev);border-radius:16px;z-index:30;padding:16px;animation:in .15s;box-shadow:0 0 0 1px var(--bd),0 24px 60px rgba(0,0,0,.28)}
+#ctxpop{position:absolute;right:160px;bottom:calc(100% + 10px);width:360px;max-height:calc(100vh - 200px);overflow:auto;display:none;background:var(--elev);border-radius:16px;z-index:30;padding:16px;animation:in .15s;box-shadow:0 0 0 1px var(--bd),0 24px 60px rgba(0,0,0,.28)}
 #ctxpop.open{display:block}
 #ctxpop h4{margin:0 0 10px;font-size:13.5px;display:flex;align-items:center;gap:8px}
 .cbar{height:8px;border-radius:8px;background:var(--hov);overflow:hidden;margin:6px 0 4px}.cbar i{display:block;height:100%;border-radius:8px}
 .crow{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);line-height:1.9}.crow b{color:var(--fg);font-variant-numeric:tabular-nums}
+.tg{margin:2px 0 8px;font-size:12px;color:var(--mut)}
+.tg>summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--bd);border-radius:999px;background:var(--panel);user-select:none}
+.tg>summary::-webkit-details-marker{display:none}
+.tg>summary:hover{border-color:var(--acc);color:var(--fg)}
+.tg>summary .ch{font-size:10px;transition:transform .15s}.tg[open]>summary .ch{transform:rotate(90deg)}
+.tg .tl{margin-top:6px;border-left:2px solid var(--bd);padding-left:10px;display:flex;flex-direction:column;gap:4px}
+.tg .ti>summary{cursor:pointer;list-style:none;font:12px Consolas,monospace;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tg .ti>summary::-webkit-details-marker{display:none}
+.tg .ti>summary b{color:var(--acc);font-weight:600}.tg .ti.err>summary b{color:#e5484d}
+.tg .ti pre{margin:4px 0 6px;max-height:280px;overflow:auto;font:11.5px/1.45 Consolas,monospace;background:var(--bd2);border-radius:8px;padding:8px;white-space:pre-wrap;word-break:break-all;color:var(--fg2)}
+.tg .ti .lb{font-size:10.5px;color:var(--mut);margin-top:4px}
+#rawbtn.on{border-color:var(--acc);color:var(--acc)}
+.cc{margin-top:12px;padding-top:12px;border-top:1px solid var(--bd2);font-size:12px}
+.cc .sb{display:flex;height:10px;border-radius:6px;overflow:hidden;margin:8px 0 6px;background:var(--bd2)}.cc .sb i{display:block;height:100%}
+.cc .lg{display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;align-items:center;color:var(--fg2)}.cc .lg s{width:9px;height:9px;border-radius:3px;display:inline-block;text-decoration:none}
+.cc .lg em{font-style:normal;color:var(--mut);text-align:right;font-variant-numeric:tabular-nums}
+.cc details{margin-top:6px}.cc details summary{cursor:pointer;color:var(--mut)}.cc .tk{display:flex;justify-content:space-between;color:var(--fg2);padding:1px 0 1px 10px;font-variant-numeric:tabular-nums}
+.cc .warn{margin-top:8px;padding:7px 9px;border-radius:9px;background:rgba(245,158,11,.12);color:var(--fg2);line-height:1.45}
 .ctips{margin-top:12px;padding-top:12px;border-top:1px solid var(--bd2);font-size:12px;color:var(--fg2)}
 .ctips .ct{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:10px;cursor:pointer}
 .ctips .ct:hover{background:var(--hov)}
@@ -289,6 +307,8 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .toolrow button:hover{border-color:var(--acc);color:var(--fg)}
 .toolrow .n{font-size:10.5px;background:var(--acc);color:#fff;border-radius:8px;padding:0 5px;font-weight:700}
 .dot.subagent{background:var(--acc2);opacity:1}
+#rawbtn{height:32px;padding:0 10px;border:1px solid var(--bd);border-radius:10px;background:var(--panel);font-size:12.5px;color:var(--fg2);margin-left:8px;flex-shrink:0}
+#rawbtn:hover{border-color:var(--acc);color:var(--fg)}
 #subb{height:32px;padding:0 10px;border:1px solid var(--bd);border-radius:10px;background:var(--panel);font-size:12.5px;color:var(--fg2);display:none;align-items:center;gap:6px;margin-left:auto}
 #subb.show{display:inline-flex}#subb:hover{border-color:var(--acc)}
 #subb + #attlist{margin-left:8px}
@@ -461,7 +481,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   <div id="info"><span class="hint">加载账户信息…</span></div>
 </aside>
 <main id="main">
-  <div id="hdr"><div class="t"><h2>Claw Studio</h2><div class="k" id="hdrk">选择左侧会话，或开始新对话</div></div><button id="subb" title="本会话派出的子任务"></button><div id="attlist"><button id="attlb" title="本会话的附件"><span>📎</span><b>0</b><span>附件</span></button><div id="attpop"></div></div></div>
+  <div id="hdr"><div class="t"><h2>Claw Studio</h2><div class="k" id="hdrk">选择左侧会话，或开始新对话</div></div><button id="subb" title="本会话派出的子任务"></button><button id="rawbtn" title="切换工具调用的显示方式（Ctrl+O）">🔧 过程</button><div id="attlist"><button id="attlb" title="本会话的附件"><span>📎</span><b>0</b><span>附件</span></button><div id="attpop"></div></div></div>
   <div id="msgs"></div>
   <div id="umap"><div class="rail"></div><div id="umpop"></div></div>
   <div id="comp">
@@ -659,11 +679,28 @@ $('#list').ondblclick=e=>{const it=e.target.closest('.it');if(it)it.querySelecto
 $('#filters').onclick=e=>{const b=e.target.closest('button');if(!b)return;filter=b.dataset.f;document.querySelectorAll('#filters button').forEach(x=>x.classList.toggle('on',x===b));render();};
 
 // ---------- 消息 ----------
-function bubble(role,text,ts,images,q,files){
+// 工具调用折叠（借鉴 Claude Code「Code Mode」：主界面只看结论，原始过程按需展开；Ctrl+O 切换原始视图）
+let rawView=localStorage.getItem('cs.rawView')==='1';
+function toolBrief(t){let a;try{a=JSON.parse(t.args);}catch{return t.args.slice(0,120);}const v=a.command||a.path||a.file_path||a.url||a.query||a.task||a.action||a.text||'';return String(typeof v==='string'?v:JSON.stringify(v)).replace(/\s+/g,' ').slice(0,140);}
+function toolGroup(tools){
+  const g=document.createElement('details');g.className='tg';g.open=rawView;
+  const cnt={};for(const t of tools)cnt[t.name]=(cnt[t.name]||0)+1;const errs=tools.filter(t=>t.error).length;
+  const out=tools.reduce((a,t)=>a+(t.resultLen||0),0);
+  g.innerHTML='<summary><span class="ch">▶</span>🔧 使用了 '+tools.length+' 次工具 · '+Object.entries(cnt).map(([k,n])=>esc(k)+(n>1?'×'+n:'')).join(' ')+(errs?' · <span style="color:#e5484d">'+errs+' 次出错</span>':'')+(out?' · 输出 '+fmtN(out)+' 字符':'')+'</summary><div class="tl"></div>';
+  const tl=g.querySelector('.tl');
+  for(const t of tools){const i=document.createElement('details');i.className='ti'+(t.error?' err':'');
+    i.innerHTML='<summary><b>'+esc(t.name)+'</b> '+esc(toolBrief(t))+'</summary><div class="lb">参数</div><pre>'+esc(t.args)+'</pre>'+(t.result!=null?'<div class="lb">结果'+(t.resultLen?'（'+t.resultLen.toLocaleString()+' 字符）':'')+'</div><pre>'+esc(t.result||'（空）')+'</pre>':'<div class="lb">（无结果记录）</div>');
+    tl.appendChild(i);}
+  return g;
+}
+function setRawView(v){rawView=v;localStorage.setItem('cs.rawView',v?'1':'0');document.querySelectorAll('#msgs details.tg').forEach(g=>g.open=v);const b=$('#rawbtn');if(b){b.classList.toggle('on',v);b.title=(v?'原始视图：已展开全部工具调用':'简洁视图：工具调用已折叠')+'（Ctrl+O 切换）';}toast(v?'原始视图：展开全部工具调用':'简洁视图：工具调用已折叠');}
+function bubble(role,text,ts,images,q,files,tools){
   const d=document.createElement('div');const last=$('#msgs').lastElementChild;d.className='m '+role+(last&&last.classList.contains(role)&&last.classList.contains('m')?' cont':'');
   d._raw=text||'';d._ts=ts||Date.now();
   d.innerHTML='<div class="av">🦞</div><div class="bd"><div class="r"><b>'+(role==='user'?'你':'Claw')+'</b><span class="ts">'+fmtS(d._ts)+'</span></div><div class="tx"></div><div class="ops"><button data-op="copy" title="复制这条消息">⧉ 复制</button><button data-op="quote" title="引用这条消息">❝ 引用</button>'+(role==='user'?'<button data-op="edit" title="修改这条消息">✎ 修改</button>':'')+'</div></div>';
   const tx=d.querySelector('.tx');
+  if(tools&&tools.length)d.querySelector('.bd').insertBefore(toolGroup(tools),tx);
+  if(!text&&tools&&tools.length){tx.remove();d.querySelector('.ops').remove();}
   if(role==='user')tx.innerHTML=userHtml(text);else tx.innerHTML=md(text||'',q);
   if(role==='user'&&q&&text){const eq=esc(q);tx.innerHTML=tx.innerHTML.replace(/>([^<]+)</g,(m,x)=>'>'+x.split(eq).join('<mark>'+eq+'</mark>')+'<');}
   if(role==='user')d.title=fmt(ts||Date.now());
@@ -716,9 +753,12 @@ $('#msgs').onclick=e=>{
   const sg=e.target.closest('.sugg button');if(sg){$('#inp').value=sg.dataset.s;autosize();$('#inp').focus();}
 };
 $('#lb').onclick=()=>$('#lb').style.display='none';
+$('#rawbtn').onclick=()=>setRawView(!rawView);
+$('#rawbtn').classList.toggle('on',rawView);
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){$('#subm').style.display='none';$('#logm').style.display='none';if(!memDirty())$('#memm').style.display='none';$('#fv').style.display='none';$('#lb').style.display='none';$('#cronm').style.display='none';$('#usem').style.display='none';closePops();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#newbtn').click();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();setRawView(!rawView);}
 });
 
 async function open(key){
@@ -732,7 +772,7 @@ async function open(key){
   $('#msgs').innerHTML='';
   if(!t.length){$('#msgs').innerHTML='<div class="empty hint" style="text-align:center;margin-top:20vh">这个会话还没有消息</div>';return;}
   $('#msgs').style.scrollBehavior='auto';
-  for(const m of t)bubble(m.role,m.text,m.ts,m.images,q,m.files);
+  for(const m of t)bubble(m.role,m.text,m.ts,m.images,q,m.files,m.tools);
   $('#msgs').scrollTop=1e9;$('#msgs').style.scrollBehavior='';
 }
 
@@ -1231,6 +1271,7 @@ function renderCtxPop(){
     '<div class="crow"><span>剩余</span><b>'+left.toLocaleString()+'</b></div>'+
     (c.compactions?'<div class="crow"><span>已自动压缩</span><b>'+c.compactions+' 次</b></div>':'')+
     '<div class="crow"><span style="font-size:11px">数值为最近一次回复时的占用；每发一条消息，整段上下文都会重新计入用量</span></div>'+
+    costHtml()+
     '<div class="ctips"><b style="font-size:12px">释放上下文</b>'+
       '<div class="ct" data-cmd="/compact"><code>/compact</code><span>把较早的对话压缩成摘要，保留要点和当前进度，继续在本会话工作</span></div>'+
       '<div class="ct" data-cmd="/compact 保留所有文件路径、已做的决定和待办，其余可以简略"><code>/compact 说明</code><span>带说明的压缩：告诉 Claw 哪些内容必须保留</span></div>'+
@@ -1238,7 +1279,26 @@ function renderCtxPop(){
       '<div class="ct" data-cmd="/context detail"><code>/context</code><span>查看上下文里都装了什么（系统提示、技能、工具、对话）</span></div>'+
     '</div>';
 }
-$('#ctxb').onclick=e=>{e.stopPropagation();const o=$('#ctxpop').classList.contains('open');closePops();if(!o){renderCtxPop();$('#ctxpop').classList.add('open');}};
+let ccData=null,ccKey=null;
+async function loadCost(){const k=selKey;if(!k){ccData=null;return;}try{ccData=await api('/api/ctxcost?key='+encodeURIComponent(k));ccKey=k;}catch{ccData=null;}if($('#ctxpop').classList.contains('open'))renderCtxPop();}
+function costHtml(){
+  if(!selKey)return '';if(ccKey!==selKey||!ccData)return '<div class="cc hint">每轮起始成本加载中…</div>';const r=ccData.report;if(!r)return '<div class="cc hint">这个会话还没有起始成本记录</div>';
+  const tk=c=>Math.round(c/3.6);const T=r.total||1;const parts=[['注入文件',r.fileChars,'#6366f1'],['技能列表',r.skillChars,'#10b981'],['工具定义',r.toolChars,'#f59e0b'],['其他系统提示',r.otherChars,'#94a3b8']];
+  const lst=(a,n)=>a.slice(0,n).map(x=>'<div class="tk"><span>'+esc(x.name)+(x.truncated?' ✂':'')+'</span><span>'+x.chars.toLocaleString()+' 字符 · ≈'+fmtN(tk(x.chars))+'</span></div>').join('');
+  const big=r.files.filter(f=>f.chars>=8000);const u=ccData.last;
+  return '<div class="cc"><b>📦 每轮起始成本</b> <span class="hint">（每发一条消息都会重复发送）</span>'+
+   '<div class="crow" style="margin-top:6px"><span>合计</span><b>'+r.total.toLocaleString()+' 字符 · ≈'+fmtN(tk(r.total))+' tokens</b></div>'+
+   '<div class="sb">'+parts.map(p=>'<i style="width:'+(p[1]/T*100)+'%;background:'+p[2]+'" title="'+p[0]+'"></i>').join('')+'</div>'+
+   '<div class="lg">'+parts.map(p=>'<s style="background:'+p[2]+'"></s><span>'+p[0]+'</span><em>'+Math.round(p[1]/T*100)+'% · ≈'+fmtN(tk(p[1]))+'</em>').join('')+'</div>'+
+   '<details><summary>注入文件 '+r.files.length+' 个</summary>'+lst(r.files.slice().sort((a,b)=>b.chars-a.chars),20)+'</details>'+
+   '<details><summary>技能 '+r.skills.length+' 个（前 10 大）</summary>'+lst(r.skills,10)+'</details>'+
+   '<details><summary>工具 '+r.tools.length+' 个（前 10 大）</summary>'+lst(r.tools,10)+'</details>'+
+   (u?'<div class="crow" style="margin-top:6px"><span>上次调用</span><b>输入 '+fmtN((u.input||0)+(u.cacheRead||0)+(u.cacheWrite||0))+'（缓存命中 '+Math.round((u.cacheRead||0)/Math.max(1,(u.input||0)+(u.cacheRead||0)+(u.cacheWrite||0))*100)+'%）· 输出 '+fmtN(u.output||0)+'</b></div>':'')+
+   (big.length?'<div class="warn">💡 '+big.map(f=>esc(f.name)+' '+fmtN(tk(f.chars))+' tokens').join('、')+' 偏大，每轮都要发送。可以考虑归档旧内容。</div>':'')+
+   (r.truncated?'<div class="warn">✂ 有 '+r.truncated+' 个文件超过单文件上限 '+(r.maxPerFile||0).toLocaleString()+' 字符，已被截断。</div>':'')+
+   '<div class="hint" style="margin-top:6px;font-size:11px">数据来自 OpenClaw 的 systemPromptReport；token 按约 3.6 字符/token 估算，中文比例不同。</div></div>';
+}
+$('#ctxb').onclick=e=>{e.stopPropagation();const o=$('#ctxpop').classList.contains('open');closePops();if(!o){renderCtxPop();$('#ctxpop').classList.add('open');loadCost();}};
 $('#ctxpop').onclick=e=>{e.stopPropagation();const t=e.target.closest('.ct');if(!t)return;closePops();if(t.dataset.new){$('#newbtn').click();return;}$('#inp').value=t.dataset.cmd;autosize();syncSend();$('#inp').focus();};
 
 // ---------- 每日用量 ----------
